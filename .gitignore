@@ -110,6 +110,11 @@ InitTestScene*.unity*
 # Never ignore DLLs in the FMOD subfolder.
 !/[Aa]ssets/Plugins/FMOD/**/lib/*
 
+# FMOD Project files
+/FMOD_Project/.cache/*
+/FMOD_Project/.unsaved/*
+/FMOD_Project/Build/*
+
 # Don't ignore images and gizmos used by FMOD in the Unity Editor.
 !/[Aa]ssets/Gizmos/FMOD/*
 !/[Aa]ssets/Editor Default Resources/FMOD/*
