@@ -9,7 +9,6 @@ public class SongDataConfig : ScriptableObject
     [Header("Song")]
     public int SongID;
     public string SongName;
-    public int BPM;
     public Sprite AlbumArt;
     public AudioClip SongAudioClip;
 

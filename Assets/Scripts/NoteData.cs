@@ -9,14 +9,12 @@ public enum NoteType
 [System.Serializable]
 public class NoteData
 {
-    [Range(0, 3)] public int lane;
-    public NoteType NoteType;
-
+    // 노트 타입
+    public NoteType type;
+    // 생성될 레인 위치
+    [Range(0, 1)] public int lane;
     // 노트 판정 시간
-    public double HitTime;
-
+    public int HitTimeMS;
     // 롱노트 판정
-    public double Duration;
-
-
+    public int Duration;
 }
