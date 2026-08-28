@@ -3,7 +3,7 @@ using UnityEngine;
 public class NoteMove : MonoBehaviour
 {
     [SerializeField] float speed;
-    [SerializeField ]NoteSpawn ns;
+    [SerializeField] NoteSpawn ns;
 
     void Start()
     {

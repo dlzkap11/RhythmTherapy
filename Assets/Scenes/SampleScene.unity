@@ -449,6 +449,52 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &407657019
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 407657021}
+  - component: {fileID: 407657020}
+  m_Layer: 0
+  m_Name: NotePool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &407657020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407657019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6369342bd605c84b80aec398438804d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NotePool
+  tapPrefab: {fileID: 7538985115740513988, guid: f48a95c0f2693de4ab769c4263791f4e, type: 3}
+  holdPrefab: {fileID: 6946411478711395203, guid: 73715e8a775854c4db2e70406c8a7ee8, type: 3}
+--- !u!4 &407657021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407657019}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 960, y: 540, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &492032765
 GameObject:
   m_ObjectHideFlags: 0
@@ -459,7 +505,7 @@ GameObject:
   m_Component:
   - component: {fileID: 492032766}
   m_Layer: 0
-  m_Name: Lane2NoteSpawn
+  m_Name: Lane2NoteSpawnPos
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -633,7 +679,7 @@ GameObject:
   m_Component:
   - component: {fileID: 566604578}
   m_Layer: 0
-  m_Name: Lane1NoteSpawn
+  m_Name: Lane1NoteSpawnPos
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -829,6 +875,51 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &841109669
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 841109671}
+  - component: {fileID: 841109670}
+  m_Layer: 0
+  m_Name: LaneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &841109670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 841109669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2e567f4f5ae34646b5639cb0b8ea8bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LaneManager
+  currentIndexes: 
+--- !u!4 &841109671
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 841109669}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.41895, y: -0.87277, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &943939975
 GameObject:
   m_ObjectHideFlags: 0
@@ -958,6 +1049,13 @@ MonoBehaviour:
   - {fileID: -1333019689849740829, guid: 3ce48347fde2e9d46b7d934017fe02bb, type: 3}
   minDelayTime: 0.7
   delay: 0
+  playTime: 0
+  testSong:
+    SongID: 0
+    SongName: 
+    SongFileName: 
+    SongAlbumName: 
+    NoteDatas: []
 --- !u!4 &1047948981
 Transform:
   m_ObjectHideFlags: 0
@@ -1191,6 +1289,8 @@ MonoBehaviour:
   alphaColor:
   - {r: 0, g: 0, b: 0, a: 0}
   - {r: 0, g: 0, b: 0, a: 0}
+  ns: {fileID: 1047948980}
+  inputTimeMs: 0
   player: {fileID: 0}
   playerInput: {fileID: 0}
 --- !u!4 &1755261567
@@ -1379,3 +1479,5 @@ SceneRoots:
   - {fileID: 57761904}
   - {fileID: 1755261567}
   - {fileID: 1047948981}
+  - {fileID: 407657021}
+  - {fileID: 841109671}

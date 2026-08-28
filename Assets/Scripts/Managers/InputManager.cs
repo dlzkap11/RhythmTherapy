@@ -9,6 +9,10 @@ public class InputManager : MonoBehaviour
     private float maxAlpha = 1.0f;
     private float midAlpha = 0.5f;
 
+    [SerializeField] private NoteSpawn ns;
+    [SerializeField] private int inputTimeMs;
+    private double inputTime;
+
     [Header("Player")]
     [SerializeField] private GameObject player;
     [SerializeField] private PlayerInput playerInput;
@@ -52,6 +56,7 @@ public class InputManager : MonoBehaviour
     {
         if (context.performed)
         {
+            Pop(0);
             alphaColor[0].a = Mathf.Clamp01(maxAlpha);
             judgmentLine[0].color = alphaColor[0];
         }
@@ -66,6 +71,7 @@ public class InputManager : MonoBehaviour
     {
         if (context.performed)
         {
+            Pop(1);
             alphaColor[1].a = Mathf.Clamp01(maxAlpha);
             judgmentLine[1].color = alphaColor[1];
         }
@@ -82,4 +88,17 @@ public class InputManager : MonoBehaviour
         Debug.Log("Pause!");
     }
     
+
+    // 판정
+    private void Pop(int lane)
+    {
+        //inputTime = ns.playTime;
+        inputTimeMs = (int)(ns.playTime * 1000f);
+        int error =  LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
+        if(error == -1)
+            return;
+
+        Debug.Log(error);
+        //TODO 판정범위에 맞춰서 정확도 계산해주기
+    }
 }

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8940950650586796087
+--- !u!1 &6985734997940272608
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,40 +8,39 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 70671683373305643}
-  - component: {fileID: 6805292676856739315}
-  - component: {fileID: 1715362684664137639}
-  - component: {fileID: -7155790271876972374}
+  - component: {fileID: 6208494669416028673}
+  - component: {fileID: 8283605227792299475}
+  - component: {fileID: 7538985115740513988}
   m_Layer: 0
-  m_Name: note_blue_0
+  m_Name: TabNote
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &70671683373305643
+--- !u!4 &6208494669416028673
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940950650586796087}
+  m_GameObject: {fileID: 6985734997940272608}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.18, y: 0.08, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &6805292676856739315
+--- !u!212 &8283605227792299475
 SpriteRenderer:
   serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940950650586796087}
+  m_GameObject: {fileID: 6985734997940272608}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -88,43 +87,20 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.09, y: 2.09}
+  m_Size: {x: 1.045, y: 1.045}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1715362684664137639
+--- !u!114 &7538985115740513988
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940950650586796087}
+  m_GameObject: {fileID: 6985734997940272608}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55476e0da555034f912e750f1a9fea9, type: 3}
+  m_Script: {fileID: 11500000, guid: a96c505dc8cfd374bbff9e0a5f27a7be, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NoteMove
-  speed: 5
-  ns: {fileID: 0}
---- !u!114 &-7155790271876972374
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940950650586796087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ade287d0c48265a4aa115cf8381865e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Note
-  data:
-    lane: 0
-    type: 0
-    HitTimeMS: 0
-    Duration: 0
-  noteType: 0
-  lane: 0
-  hitTime: 0
-  duration: 0
+  m_EditorClassIdentifier: Assembly-CSharp::NoteView
