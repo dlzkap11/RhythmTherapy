@@ -1,41 +1,48 @@
-using System.Collections;
 using System.Collections.Generic;
+using RhythmTherapy.Core;
 using UnityEngine;
 
 public class NoteSpawn : MonoBehaviour
 {
-    //랜덤 노트 생성기
-    [SerializeField] private GameObject[] laneNotes;
-    
+    [SerializeField] private GameObject[] laneNotes;        // 레인별 스폰 위치
+    [SerializeField] private Transform[] laneJudgeLines;    // 레인별 판정선 위치
+
     [SerializeField] private GameObject notePrefabs;
     [SerializeField] private Sprite[] noteSprites;
-    [SerializeField] private float minDelayTime;
-    [SerializeField] float delay;
-    private float spawnTime;
 
-    //임시 값
+    // InputManager 가 읽는 공유 재생 시간(초). Conductor 시계로 매 프레임 갱신된다.
     public double playTime;
-    [SerializeField] SongData testSong;
 
+    [SerializeField] private SongData testSong;
 
     private Queue<GameObject> notePool = new Queue<GameObject>();
     private const int MAX_POOL_SIZE = 30;
 
+    // 스폰된 시각 노트를 레인별 FIFO 로 보관. LaneManager 의 노트 데이터 소비와 1:1 대응.
+    private Queue<Note>[] activeByLane;
+
+    private int index = 0;
+
     private void Awake()
     {
-        for(int i = 0;  i < MAX_POOL_SIZE; i++)
+        for (int i = 0; i < MAX_POOL_SIZE; i++)
         {
             GameObject note = Instantiate(notePrefabs, transform);
             note.SetActive(false);
             notePool.Enqueue(note);
         }
-
-        spawnTime = 0f;
     }
 
     private void Start()
     {
         LaneManager.Instance.MakeList(2);
+
+        activeByLane = new Queue<Note>[laneJudgeLines.Length];
+        for (int i = 0; i < activeByLane.Length; i++)
+            activeByLane[i] = new Queue<Note>();
+
+        LaneManager.Instance.NoteJudged += OnLaneNoteConsumed;
+        LaneManager.Instance.NoteAutoMissed += OnLaneNoteConsumed;
 
         testSong = SongDataFactory.CreateRandomSong(
             songId: 4,
@@ -44,58 +51,85 @@ public class NoteSpawn : MonoBehaviour
             laneCount: 2,
             bpm: 120f);
 
-        int cnt = 0;
-        while (cnt < testSong.NoteDatas.Count)
+        // 노래 재생 전에 레인별 노트 데이터 삽입 완료
+        for (int i = 0; i < testSong.NoteDatas.Count; i++)
+            LaneManager.Instance.NoteAdd(testSong.NoteDatas[i]);
+    }
+
+    private void OnDestroy()
+    {
+        if (LaneManager.Instance == null)
+            return;
+
+        LaneManager.Instance.NoteJudged -= OnLaneNoteConsumed;
+        LaneManager.Instance.NoteAutoMissed -= OnLaneNoteConsumed;
+    }
+
+    private void Update()
+    {
+        Conductor conductor = Conductor.Instance;
+        if (conductor == null)
+            return;
+
+        // InputManager.Pop 이 ns.playTime * 1000 으로 입력시간을 만든다 → 같은 시계 공유
+        playTime = conductor.SongTime;
+
+        double songMs = conductor.SongTimeMs;
+
+        // 판정시간 - 이동시간(ApproachMs) 이 되면 노트 활성화
+        while (index < testSong.NoteDatas.Count)
         {
-            LaneManager.Instance.NoteAdd(testSong.NoteDatas[cnt]);
-            cnt++;
+            NoteData data = testSong.NoteDatas[index];
+            if (NoteMath.SpawnTimeMs(data.HitTimeMS, GameConfig.ApproachMs) > songMs)
+                break;
+
+            SpawnNote(data);
+            index++;
         }
+
+        // 판정선을 지나친 노트 자동 소비 → OnLaneNoteConsumed 로 시각 노트 해제
+        LaneManager.Instance.CollectAutoMisses((int)songMs);
     }
 
-    int index = 0;
-    void Update()
+    private void SpawnNote(NoteData data)
     {
-        // 임시 노래재생시간
-        playTime += Time.deltaTime;
-
-
-        // 생성될 때 어느 레인에 나왔냐에 따라 스프라이트 바꾸기
-        spawnTime += Time.deltaTime;
-        if(spawnTime >= delay)
+        if (notePool.Count == 0)
         {
-            if(notePool.Count > 0)
-            {
-                int result = Random.Range(0, 2);
-                GameObject note = notePool.Dequeue();
-                note.transform.position = laneNotes[testSong.NoteDatas[index].lane].transform.position;
-                note.GetComponent<SpriteRenderer>().sprite = noteSprites[testSong.NoteDatas[index].lane];
-
-                // 노트 데이터 보내주기
-                // 재생시간 + 3.0f 임시 판정 보정
-                if (index >= testSong.NoteDatas.Count)
-                    return;
-                note.GetComponent<Note>().InitNoteData(testSong.NoteDatas[index], (playTime + 3.0f)*1000f);
-                note.SetActive(true);
-                index++;
-                
-            }
-            else
-            {
-                Debug.Log("pool empty");
-            }
-
-            spawnTime = 0f;
-            delay = minDelayTime + Random.Range(0, 0.5f);
+            Debug.LogWarning("[NoteSpawn] pool empty");
+            return;
         }
-    }
-    public void Get()
-    {
 
+        int lane = Mathf.Clamp(data.lane, 0, laneNotes.Length - 1);
+        Vector3 spawnPos = laneNotes[lane].transform.position;
+        Vector3 targetPos = laneJudgeLines[lane].position;
+
+        GameObject note = notePool.Dequeue();
+        note.transform.position = spawnPos;
+        note.GetComponent<SpriteRenderer>().sprite = noteSprites[lane];
+
+        Note noteComp = note.GetComponent<Note>();
+        noteComp.Bind(data, spawnPos, targetPos, GameConfig.ApproachMs);
+        note.SetActive(true);
+
+        activeByLane[lane].Enqueue(noteComp);
     }
 
-    public void Release(GameObject gameObject)
+    // 해당 레인에서 데이터 노트 1개가 소비됨 → 가장 오래된 시각 노트를 풀로 반환
+    private void OnLaneNoteConsumed(int lane)
     {
-        gameObject.SetActive(false);
-        notePool.Enqueue(gameObject);
+        if (lane < 0 || lane >= activeByLane.Length || activeByLane[lane].Count == 0)
+            return;
+
+        Note note = activeByLane[lane].Dequeue();
+        Release(note.gameObject);
+    }
+
+    public void Release(GameObject go)
+    {
+        if (!go.activeSelf)
+            return;
+
+        go.SetActive(false);
+        notePool.Enqueue(go);
     }
 }

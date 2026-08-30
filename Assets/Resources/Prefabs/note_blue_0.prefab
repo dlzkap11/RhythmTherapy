@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 70671683373305643}
   - component: {fileID: 6805292676856739315}
-  - component: {fileID: 1715362684664137639}
   - component: {fileID: -7155790271876972374}
   m_Layer: 0
   m_Name: note_blue_0
@@ -93,20 +92,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!114 &1715362684664137639
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940950650586796087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b55476e0da555034f912e750f1a9fea9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NoteMove
-  speed: 5
-  ns: {fileID: 0}
 --- !u!114 &-7155790271876972374
 MonoBehaviour:
   m_ObjectHideFlags: 0
