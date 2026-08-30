@@ -14,6 +14,13 @@ public class LaneManager : MonoBehaviour
     [SerializeField] private List<NoteData>[] laneNotes;
     [SerializeField] private int[] currentIndexes;
 
+    // 임시 판정 범위(ms). 판정 등급이 정해지면 설정값으로 분리 예정.
+    private const int JUDGE_RANGE_MS = 200;
+
+    // 노트 1개가 소비될 때 발생 (int = 레인). 시각 노트 해제에 사용.
+    public event System.Action<int> NoteJudged;      // 키 입력으로 판정됨
+    public event System.Action<int> NoteAutoMissed;  // 판정선을 지나쳐 자동 소멸
+
     static void Init()
     {
         if (instance == null)
@@ -75,26 +82,26 @@ public class LaneManager : MonoBehaviour
             NoteData note = laneNotes[lane][currentIndexes[lane]];
 
             Debug.Log($"입력시간 :{currentInputTimeMs}, 판정시간 : {note.HitTimeMS}");
-            // 이미 지나간 노트는 스킵
-            if (note.HitTimeMS < currentInputTimeMs - 200)
+            // 이미 지나간 노트는 자동 소멸 처리하며 스킵 (커서 전진 = 이벤트 1회, CollectAutoMisses 와 일관)
+            if (note.HitTimeMS < currentInputTimeMs - JUDGE_RANGE_MS)
             {
                 currentIndexes[lane]++;
+                NoteAutoMissed?.Invoke(lane);
                 continue;
             }
 
             //입력시간 - 노트판정시간
             int error = Mathf.Abs(currentInputTimeMs - note.HitTimeMS);
-            
-            // 임시 판정 범위
-            int jubgeRange = 200;
 
             //판정 범위 밖
-            if(error > jubgeRange)
+            if (error > JUDGE_RANGE_MS)
             {
                 break;
             }
-            
-            // 범위 안 노트를 찾으면 반환
+
+            // 범위 안 노트를 찾으면 소비하고 반환
+            currentIndexes[lane]++;
+            NoteJudged?.Invoke(lane);
             return error;
 
         }
@@ -102,6 +109,23 @@ public class LaneManager : MonoBehaviour
 
         // 순회 후 못 찾으면 널...
         return -1;
+    }
+
+    // 판정선을 지나쳐(판정범위 밖으로 넘어가) 자동 소멸되는 노트들을 소비한다. 매 프레임 호출.
+    public void CollectAutoMisses(int songTimeMs)
+    {
+        if (laneNotes == null)
+            return;
+
+        for (int lane = 0; lane < laneNotes.Length; lane++)
+        {
+            while (currentIndexes[lane] < laneNotes[lane].Count &&
+                   songTimeMs - JUDGE_RANGE_MS > laneNotes[lane][currentIndexes[lane]].HitTimeMS)
+            {
+                currentIndexes[lane]++;
+                NoteAutoMissed?.Invoke(lane);
+            }
+        }
     }
 
 

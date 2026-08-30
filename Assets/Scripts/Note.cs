@@ -14,12 +14,12 @@ public class Note : MonoBehaviour
     private Vector3 spawnPos;
     private Vector3 targetPos;
     private int approachMs;
-    private NoteSpawn owner;
 
     /// <summary>
     /// 노트 데이터 + 이동 구간(스폰→판정선) 바인딩. 위치는 노래 재생 시간으로부터 매 프레임 계산한다.
+    /// 화면에서 제거되는 시점은 LaneManager(NoteJudged/NoteAutoMissed)가 결정한다.
     /// </summary>
-    public void Bind(NoteData noteData, Vector3 spawn, Vector3 target, int approach, NoteSpawn spawner)
+    public void Bind(NoteData noteData, Vector3 spawn, Vector3 target, int approach)
     {
         data = noteData;
         noteType = data.type;
@@ -30,7 +30,6 @@ public class Note : MonoBehaviour
         spawnPos = spawn;
         targetPos = target;
         approachMs = approach;
-        owner = spawner;
 
         transform.position = spawnPos;
     }
@@ -43,9 +42,5 @@ public class Note : MonoBehaviour
 
         float p = (float)NoteMath.Progress(conductor.SongTimeMs, hitTime, approachMs);
         transform.position = Vector3.LerpUnclamped(spawnPos, targetPos, p);
-
-        // 판정선을 한참 지나면 풀로 반환 (미입력/미해제 노트 정리)
-        if (p > 1.5f && owner != null)
-            owner.Release(gameObject);
     }
 }

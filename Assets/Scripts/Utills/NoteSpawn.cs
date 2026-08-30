@@ -18,6 +18,9 @@ public class NoteSpawn : MonoBehaviour
     private Queue<GameObject> notePool = new Queue<GameObject>();
     private const int MAX_POOL_SIZE = 30;
 
+    // 스폰된 시각 노트를 레인별 FIFO 로 보관. LaneManager 의 노트 데이터 소비와 1:1 대응.
+    private Queue<Note>[] activeByLane;
+
     private int index = 0;
 
     private void Awake()
@@ -34,6 +37,13 @@ public class NoteSpawn : MonoBehaviour
     {
         LaneManager.Instance.MakeList(2);
 
+        activeByLane = new Queue<Note>[laneJudgeLines.Length];
+        for (int i = 0; i < activeByLane.Length; i++)
+            activeByLane[i] = new Queue<Note>();
+
+        LaneManager.Instance.NoteJudged += OnLaneNoteConsumed;
+        LaneManager.Instance.NoteAutoMissed += OnLaneNoteConsumed;
+
         testSong = SongDataFactory.CreateRandomSong(
             songId: 4,
             songName: "Random Song",
@@ -44,6 +54,15 @@ public class NoteSpawn : MonoBehaviour
         // 노래 재생 전에 레인별 노트 데이터 삽입 완료
         for (int i = 0; i < testSong.NoteDatas.Count; i++)
             LaneManager.Instance.NoteAdd(testSong.NoteDatas[i]);
+    }
+
+    private void OnDestroy()
+    {
+        if (LaneManager.Instance == null)
+            return;
+
+        LaneManager.Instance.NoteJudged -= OnLaneNoteConsumed;
+        LaneManager.Instance.NoteAutoMissed -= OnLaneNoteConsumed;
     }
 
     private void Update()
@@ -67,6 +86,9 @@ public class NoteSpawn : MonoBehaviour
             SpawnNote(data);
             index++;
         }
+
+        // 판정선을 지나친 노트 자동 소비 → OnLaneNoteConsumed 로 시각 노트 해제
+        LaneManager.Instance.CollectAutoMisses((int)songMs);
     }
 
     private void SpawnNote(NoteData data)
@@ -84,8 +106,22 @@ public class NoteSpawn : MonoBehaviour
         GameObject note = notePool.Dequeue();
         note.transform.position = spawnPos;
         note.GetComponent<SpriteRenderer>().sprite = noteSprites[lane];
-        note.GetComponent<Note>().Bind(data, spawnPos, targetPos, GameConfig.ApproachMs, this);
+
+        Note noteComp = note.GetComponent<Note>();
+        noteComp.Bind(data, spawnPos, targetPos, GameConfig.ApproachMs);
         note.SetActive(true);
+
+        activeByLane[lane].Enqueue(noteComp);
+    }
+
+    // 해당 레인에서 데이터 노트 1개가 소비됨 → 가장 오래된 시각 노트를 풀로 반환
+    private void OnLaneNoteConsumed(int lane)
+    {
+        if (lane < 0 || lane >= activeByLane.Length || activeByLane[lane].Count == 0)
+            return;
+
+        Note note = activeByLane[lane].Dequeue();
+        Release(note.gameObject);
     }
 
     public void Release(GameObject go)
