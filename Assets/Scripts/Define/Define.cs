@@ -1,14 +1,6 @@
 using UnityEngine;
 
-public class Define : MonoBehaviour
+public class Define
 {
-    void Start()
-    {
-        
-    }
 
-    void Update()
-    {
-        
-    }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -18,8 +19,9 @@ public class LaneManager : MonoBehaviour
     private const int JUDGE_RANGE_MS = 200;
 
     // 노트 1개가 소비될 때 발생 (int = 레인). 시각 노트 해제에 사용.
-    public event System.Action<int> NoteJudged;      // 키 입력으로 판정됨
-    public event System.Action<int> NoteAutoMissed;  // 판정선을 지나쳐 자동 소멸
+    public event Action<int, int> NoteJudged;      // 키 입력으로 판정됨
+    public event Action<int> NoteJudgedLane;
+    public event Action<int> NoteAutoMissed;  // 판정선을 지나쳐 자동 소멸
 
     static void Init()
     {
@@ -74,7 +76,7 @@ public class LaneManager : MonoBehaviour
     }
 
 
-    public int FindAndGetNote(int lane, int currentInputTimeMs)
+    public void FindAndGetNote(int lane, int currentInputTimeMs)
     {
         //해당 레인의 노트를 순회
         while (currentIndexes[lane] < laneNotes[lane].Count)
@@ -82,7 +84,7 @@ public class LaneManager : MonoBehaviour
             NoteData note = laneNotes[lane][currentIndexes[lane]];
 
             Debug.Log($"입력시간 :{currentInputTimeMs}, 판정시간 : {note.HitTimeMS}");
-            // 이미 지나간 노트는 자동 소멸 처리하며 스킵 (커서 전진 = 이벤트 1회, CollectAutoMisses 와 일관)
+            // 이미 지나간 노트는 자동 소멸 처리하며 스킵
             if (note.HitTimeMS < currentInputTimeMs - JUDGE_RANGE_MS)
             {
                 currentIndexes[lane]++;
@@ -101,14 +103,11 @@ public class LaneManager : MonoBehaviour
 
             // 범위 안 노트를 찾으면 소비하고 반환
             currentIndexes[lane]++;
-            NoteJudged?.Invoke(lane);
-            return error;
+            NoteJudged?.Invoke(error, lane);
+            NoteJudgedLane?.Invoke(lane);
 
         }
 
-
-        // 순회 후 못 찾으면 널...
-        return -1;
     }
 
     // 판정선을 지나쳐(판정범위 밖으로 넘어가) 자동 소멸되는 노트들을 소비한다. 매 프레임 호출.

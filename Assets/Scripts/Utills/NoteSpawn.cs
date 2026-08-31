@@ -41,7 +41,7 @@ public class NoteSpawn : MonoBehaviour
         for (int i = 0; i < activeByLane.Length; i++)
             activeByLane[i] = new Queue<Note>();
 
-        LaneManager.Instance.NoteJudged += OnLaneNoteConsumed;
+        LaneManager.Instance.NoteJudgedLane += OnLaneNoteConsumed;
         LaneManager.Instance.NoteAutoMissed += OnLaneNoteConsumed;
 
         testSong = SongDataFactory.CreateRandomSong(
@@ -61,7 +61,7 @@ public class NoteSpawn : MonoBehaviour
         if (LaneManager.Instance == null)
             return;
 
-        LaneManager.Instance.NoteJudged -= OnLaneNoteConsumed;
+        LaneManager.Instance.NoteJudgedLane -= OnLaneNoteConsumed;
         LaneManager.Instance.NoteAutoMissed -= OnLaneNoteConsumed;
     }
 
