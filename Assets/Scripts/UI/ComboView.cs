@@ -25,6 +25,6 @@ public class ComboView : MonoBehaviour
 
     private void Updated(int current)
     {
-        combo.text = "Combo:" + current;
+        combo.text = "Combo : " + current;
     }
 }

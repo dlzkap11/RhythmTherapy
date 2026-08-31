@@ -15,15 +15,18 @@ public sealed class GameManager : MonoBehaviour
     private readonly ComboSystem combo = new ComboSystem();
     private readonly HpSystem hp = new HpSystem(GameConfig.HpMax);
     private readonly JudgeSystem judge = new JudgeSystem();
-
+    private readonly ScoreSystem score = new ScoreSystem();
 
     private bool hpDepletedFired;
+    private int noteCount;
 
     public int Combo => combo.Current;
     public int MaxCombo => combo.Max;
     public int Hp => hp.Current;
     public int HpMax => hp.Max;
     public JudgeType JudgeAC => judge.JudgeAC;
+    public int Score => score.CurrentScore;
+    public int MaxScore => score.MaxScore;
 
 
     // 콤보 이벤트
@@ -35,6 +38,11 @@ public sealed class GameManager : MonoBehaviour
     // 판정 이벤트
     public event Action<int> Judged;
     public event Action<int> JudgeMissed;
+    // 점수 이벤트
+    public event Action<int, int> ScoreChanged;
+
+
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
@@ -83,13 +91,16 @@ public sealed class GameManager : MonoBehaviour
             Instance = null;
     }
 
-    //TODO 판정정확도 넣기
     private void OnNoteJudged(int error, int lane)
     {
+        noteCount++;
         int comboAfter = combo.RegisterHit();
         ComboChanged?.Invoke(comboAfter);
         judge.JudgeAC = judge.AccAss(error);
         Judged?.Invoke(lane);
+        int currentScore = score.SumScore((int)judge.JudgeAC, comboAfter);
+        ScoreChanged?.Invoke(currentScore, noteCount);
+
         // 콤보가 임계값 이상이면 판정 성공마다 HP 회복
         if (comboAfter >= GameConfig.HpHealComboThreshold)
         {
@@ -101,11 +112,13 @@ public sealed class GameManager : MonoBehaviour
 
     private void OnNoteAutoMissed(int lane)
     {
+        noteCount++;
         // HP 감소는 콤보 상태와 무관하게 항상
         hp.Damage(GameConfig.HpMissDamage);
         HpChanged?.Invoke(hp.Current);
         judge.JudgeAC = judge.AccAss(200);
         Judged?.Invoke(lane);
+        ScoreChanged?.Invoke(0, noteCount);
         if (hp.IsDepleted && !hpDepletedFired)
         {
             hpDepletedFired = true;
