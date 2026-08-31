@@ -1,6 +1,8 @@
-using System.Collections.Generic;
 using RhythmTherapy.Core;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class NoteSpawn : MonoBehaviour
 {
@@ -22,6 +24,13 @@ public class NoteSpawn : MonoBehaviour
     private Queue<Note>[] activeByLane;
 
     private int index = 0;
+
+
+    [SerializeField] private float resultDelaySeconds = 1.5f;
+
+    private int activeNoteCount;
+    private bool allNotesSpawned;
+    private bool isEnding;
 
     private void Awake()
     {
