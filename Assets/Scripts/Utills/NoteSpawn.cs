@@ -1,6 +1,8 @@
-using System.Collections.Generic;
 using RhythmTherapy.Core;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class NoteSpawn : MonoBehaviour
 {
@@ -23,6 +25,13 @@ public class NoteSpawn : MonoBehaviour
 
     private int index = 0;
 
+
+    [SerializeField] private float resultDelaySeconds = 1.5f;
+
+    private int activeNoteCount;
+    private bool allNotesSpawned;
+    private bool isEnding;
+
     private void Awake()
     {
         for (int i = 0; i < MAX_POOL_SIZE; i++)
@@ -41,7 +50,7 @@ public class NoteSpawn : MonoBehaviour
         for (int i = 0; i < activeByLane.Length; i++)
             activeByLane[i] = new Queue<Note>();
 
-        LaneManager.Instance.NoteJudged += OnLaneNoteConsumed;
+        LaneManager.Instance.NoteJudgedLane += OnLaneNoteConsumed;
         LaneManager.Instance.NoteAutoMissed += OnLaneNoteConsumed;
 
         testSong = SongDataFactory.CreateRandomSong(
@@ -61,7 +70,7 @@ public class NoteSpawn : MonoBehaviour
         if (LaneManager.Instance == null)
             return;
 
-        LaneManager.Instance.NoteJudged -= OnLaneNoteConsumed;
+        LaneManager.Instance.NoteJudgedLane -= OnLaneNoteConsumed;
         LaneManager.Instance.NoteAutoMissed -= OnLaneNoteConsumed;
     }
 

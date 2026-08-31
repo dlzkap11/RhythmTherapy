@@ -1,4 +1,5 @@
 using RhythmTherapy.Core;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -13,20 +14,34 @@ public sealed class GameManager : MonoBehaviour
 
     private readonly ComboSystem combo = new ComboSystem();
     private readonly HpSystem hp = new HpSystem(GameConfig.HpMax);
+    private readonly JudgeSystem judge = new JudgeSystem();
+    private readonly ScoreSystem score = new ScoreSystem();
 
     private bool hpDepletedFired;
+    private int noteCount;
 
     public int Combo => combo.Current;
     public int MaxCombo => combo.Max;
     public int Hp => hp.Current;
     public int HpMax => hp.Max;
+    public JudgeType JudgeAC => judge.JudgeAC;
+    public int Score => score.CurrentScore;
+    public int MaxScore => score.MaxScore;
 
-    /// <summary>콤보 값이 바뀔 때 발생 (인자 = 바뀐 콤보).</summary>
-    public event System.Action<int> ComboChanged;
-    /// <summary>HP 값이 바뀔 때 발생 (인자 = 바뀐 HP).</summary>
-    public event System.Action<int> HpChanged;
-    /// <summary>HP 가 0 에 처음 도달했을 때 1회 발생.</summary>
-    public event System.Action HpDepleted;
+
+    // 콤보 이벤트
+    public event Action<int> ComboChanged;
+    // HP 이벤트
+    public event Action<int> HpChanged;
+    // HP 0 이벤트
+    public event Action HpDepleted;
+    // 판정 이벤트
+    public event Action<int> Judged;
+    public event Action<int> JudgeMissed;
+    // 점수 이벤트
+    public event Action<int, int> ScoreChanged;
+
+
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
@@ -76,10 +91,15 @@ public sealed class GameManager : MonoBehaviour
             Instance = null;
     }
 
-    private void OnNoteJudged(int lane)
+    private void OnNoteJudged(int error, int lane)
     {
+        noteCount++;
         int comboAfter = combo.RegisterHit();
         ComboChanged?.Invoke(comboAfter);
+        judge.JudgeAC = judge.AccAss(error);
+        Judged?.Invoke(lane);
+        int currentScore = score.SumScore((int)judge.JudgeAC, comboAfter);
+        ScoreChanged?.Invoke(currentScore, noteCount);
 
         // 콤보가 임계값 이상이면 판정 성공마다 HP 회복
         if (comboAfter >= GameConfig.HpHealComboThreshold)
@@ -89,12 +109,16 @@ public sealed class GameManager : MonoBehaviour
         }
     }
 
+
     private void OnNoteAutoMissed(int lane)
     {
+        noteCount++;
         // HP 감소는 콤보 상태와 무관하게 항상
         hp.Damage(GameConfig.HpMissDamage);
         HpChanged?.Invoke(hp.Current);
-
+        judge.JudgeAC = judge.AccAss(200);
+        Judged?.Invoke(lane);
+        ScoreChanged?.Invoke(0, noteCount);
         if (hp.IsDepleted && !hpDepletedFired)
         {
             hpDepletedFired = true;
@@ -107,12 +131,5 @@ public sealed class GameManager : MonoBehaviour
             combo.Break();
             ComboChanged?.Invoke(0);
         }
-    }
-
-    // 검증용 임시 HUD. 정식 Canvas/TMP HUD 는 점수와 함께 추후 구현.
-    private void OnGUI()
-    {
-        GUI.Label(new Rect(20, 20, 320, 24), $"COMBO {combo.Current}   (MAX {combo.Max})");
-        GUI.Label(new Rect(20, 44, 320, 24), $"HP {hp.Current} / {hp.Max}");
     }
 }

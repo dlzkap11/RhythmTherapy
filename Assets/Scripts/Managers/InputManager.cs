@@ -1,3 +1,4 @@
+using RhythmTherapy.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -94,11 +95,6 @@ public class InputManager : MonoBehaviour
     {
         //inputTime = ns.playTime;
         inputTimeMs = (int)(ns.playTime * 1000f);
-        int error =  LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
-        if(error == -1)
-            return;
-
-        Debug.Log(error);
-        //TODO 판정범위에 맞춰서 정확도 계산해주기
+        LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
     }
 }
