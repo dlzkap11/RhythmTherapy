@@ -25,6 +25,26 @@ namespace RhythmTherapy.Core
         /// <summary>종료 감지 후 마지막 판정을 보여주고 ResultScene 으로 넘어가기까지 대기(초).</summary>
         public const float ResultDelaySeconds = 1.5f;
 
+        // --- 연출 타이밍 (표시용, 밸런싱 무관) ---
+        /// <summary>ResultScene 인트로 배너("STAGE CLEAR" 등)가 화면에 머무는 시간(초).</summary>
+        public const float ResultIntroHoldSeconds = 0.6f;
+        /// <summary>인트로 배너가 슬라이드로 등장·퇴장하는 데 걸리는 시간(초).</summary>
+        public const float ResultIntroBannerMoveSeconds = 0.35f;
+        /// <summary>결과 패널(곡/랭크/판정)이 페이드인되는 시간(초).</summary>
+        public const float ResultPanelFadeSeconds = 0.35f;
+        /// <summary>결과 패널들이 순차 등장할 때 패널 사이 지연(초).</summary>
+        public const float ResultPanelStaggerSeconds = 0.08f;
+        /// <summary>정확도 원형 게이지가 0에서 목표치까지 차오르는 시간(초).</summary>
+        public const float RankGaugeFillSeconds = 0.8f;
+        /// <summary>Score/ACC 숫자가 0에서 최종값까지 카운트업되는 시간(초).</summary>
+        public const float ResultCountUpSeconds = 0.7f;
+        /// <summary>결과창 판정 갯수 한 줄이 페이드인되는 시간(초).</summary>
+        public const float ResultJudgeLineFadeSeconds = 0.18f;
+        /// <summary>결과창 판정 갯수 줄이 순차 등장할 때 줄 사이 간격(초).</summary>
+        public const float ResultJudgeLineStaggerSeconds = 0.1f;
+        /// <summary>GameScene 풀콤보 연출 배너가 화면에 머무는 시간(초).</summary>
+        public const float FullComboHoldSeconds = 0.7f;
+
         /// <summary>정확도(0~100) 구간 하한 → 등급. 높은 구간부터 순서대로 검사.</summary>
         public struct GradeThreshold
         {
