@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2245887922150278572}
   - component: {fileID: 8086790779226292411}
   m_Layer: 5
-  m_Name: Perfect
+  m_Name: JudgementPopup
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -1,9 +1,9 @@
 public enum JudgeType
 {
     Perfect = 100,
-    Great = 75,
-    Good = 50,
-    Bad = 25,
+    Great = 90,
+    Good = 70,
+    Bad = 40,
     Miss = 0,
 }
 

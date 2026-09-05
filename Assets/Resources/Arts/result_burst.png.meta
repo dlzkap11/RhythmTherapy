@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d179208ba76d63246ad725c11641564c
+guid: f8e568214d679f141969b038f7e31b3a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -8644805774915307935
-    second: fever_gauge_0
+      213: -158879753815436007
+    second: result_burst_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -72,10 +72,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 1024
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: fever_gauge_0
+      name: result_burst_0
       rect:
         serializedVersion: 2
-        x: 7
-        y: 23
-        width: 887
-        height: 83
+        x: 0
+        y: 0
+        width: 1024
+        height: 1024
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 1667de923fa770880800000000000000
-      internalID: -8644805774915307935
+      spriteID: 91554d7a4bb8bcdf0800000000000000
+      internalID: -158879753815436007
       vertices: []
       indices: 
       edges: []
@@ -138,7 +138,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      fever_gauge_0: -8644805774915307935
+      result_burst_0: -158879753815436007
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

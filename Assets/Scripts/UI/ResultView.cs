@@ -1,13 +1,14 @@
+using DG.Tweening;
 using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
 /// ResultScene 루트에 부착. GameManager.EndGame 이 GameSession.LastResult 에 채워 둔 결과를
-/// 화면에 표시한다. 인스펙터 필드를 비워두면 씬 오브젝트 이름으로 자동 탐색한다
-/// (ACC / Score / Rank / SongName / Perpect / Great / Good / Bad / Miss / FC/AP).
+/// 인트로 배너("STAGE CLEAR" 등) 후 순차 연출로 표시한다. 인스펙터 필드를 비워두면 씬 오브젝트
+/// 이름으로 자동 탐색한다 (Score / ACC / Rank / SongName / 판정별 / FcAp / GaugeFill /
+/// SongPanel / RankPanel / JudgePanel / IntroBanner / BannerText / BannerBurst).
 /// </summary>
 public class ResultView : MonoBehaviour
 {
@@ -22,19 +23,62 @@ public class ResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI badText;
     [SerializeField] private TextMeshProUGUI missText;
     [SerializeField] private TextMeshProUGUI fcApText;
+    [SerializeField] private TextMeshProUGUI maxComboText;
+    [SerializeField] private Image rankGaugeFill;
+
+    [Header("연출")]
+    [SerializeField] private CanvasGroup bannerGroup;
+    [SerializeField] private TextMeshProUGUI bannerText;
+    [SerializeField] private RectTransform bannerBurst;
+    [SerializeField] private CanvasGroup songGroup;
+    [SerializeField] private CanvasGroup rankGroup;
+    [SerializeField] private CanvasGroup judgeGroup;
+    [SerializeField] private CanvasGroup retryButtonGroup;
 
     [Header("버튼 (선택, 비워도 무방)")]
     [SerializeField] private Button retryButton;
     [SerializeField] private Button lobbyButton;
 
+    private Sequence sequence;
+
     private void Start()
     {
         AutoBind();
-        Apply(GameSession.LastResult);
+
+        GameResult r = GameSession.LastResult;
+        PopulateTexts(r);
 
         if (retryButton != null) retryButton.onClick.AddListener(Retry);
         if (lobbyButton != null) lobbyButton.onClick.AddListener(GoToLobby);
+
+        // 연출용 오브젝트가 배선 안 됐으면(씬 미구성) 즉시 전체 표시 + 게이지만 트윈.
+        if (bannerGroup == null || bannerText == null)
+        {
+            SetGroupAlpha(songGroup, 1f);
+            SetGroupAlpha(rankGroup, 1f);
+            SetGroupAlpha(judgeGroup, 1f);
+            SetGroupAlpha(retryButtonGroup, 1f);
+            SetButtonInteractable(true);
+            FillGauge(r);
+            return;
+        }
+
+        SetGroupAlpha(songGroup, 0f);
+        SetGroupAlpha(rankGroup, 0f);
+        SetGroupAlpha(judgeGroup, 0f);
+        SetGroupAlpha(retryButtonGroup, 0f);
+        SetButtonInteractable(false);
+        bannerGroup.alpha = 0f;
+        if (rankGaugeFill != null) rankGaugeFill.fillAmount = 0f;
+        if (fcApText != null) fcApText.transform.localScale = Vector3.one;
+
+        if (r.cleared)
+            PlayClearSequence(r);
+        else
+            PlayFailSequence();
     }
+
+    private void OnDestroy() => sequence?.Kill();
 
     private void AutoBind()
     {
@@ -42,38 +86,258 @@ public class ResultView : MonoBehaviour
         if (accText == null) accText = FindTextByName("ACC");
         if (rankText == null) rankText = FindTextByName("Rank");
         if (songNameText == null) songNameText = FindTextByName("SongName");
-        if (perfectText == null) perfectText = FindTextByName("Perpect") ?? FindTextByName("Perfect");
+        if (perfectText == null) perfectText = FindTextByName("Perfect");
         if (greatText == null) greatText = FindTextByName("Great");
         if (goodText == null) goodText = FindTextByName("Good");
         if (badText == null) badText = FindTextByName("Bad");
         if (missText == null) missText = FindTextByName("Miss");
-        if (fcApText == null) fcApText = FindTextByName("FC/AP");
+        if (fcApText == null) fcApText = FindTextByName("FcAp");
+        if (maxComboText == null) maxComboText = FindTextByName("MaxCombo");
+        if (rankGaugeFill == null) rankGaugeFill = FindImageByName("GaugeFill");
+
+        if (bannerGroup == null) bannerGroup = FindByName<CanvasGroup>("IntroBanner");
+        if (bannerText == null) bannerText = FindTextByName("BannerText");
+        if (bannerBurst == null) bannerBurst = FindByName<RectTransform>("BannerBurst");
+        if (songGroup == null) songGroup = FindByName<CanvasGroup>("SongPanel");
+        if (rankGroup == null) rankGroup = FindByName<CanvasGroup>("RankPanel");
+        if (judgeGroup == null) judgeGroup = FindByName<CanvasGroup>("JudgePanel");
+        if (retryButtonGroup == null) retryButtonGroup = FindByName<CanvasGroup>("RetryButton");
+        if (retryButton == null) retryButton = FindByName<Button>("RetryButton");
     }
 
-    private void Apply(GameResult r)
+    private void PopulateTexts(GameResult r)
     {
-        if (scoreText != null) scoreText.text = $"SCORE  {r.score}";
+        if (scoreText != null) scoreText.text = $"SCORE \n {r.score}";
         if (accText != null) accText.text = $"{r.accuracy:F2}%";
         if (rankText != null) rankText.text = string.IsNullOrEmpty(r.grade) ? "-" : r.grade;
         if (songNameText != null) songNameText.text = r.songName;
-        if (perfectText != null) perfectText.text = r.perfect.ToString();
-        if (greatText != null) greatText.text = r.great.ToString();
-        if (goodText != null) goodText.text = r.good.ToString();
-        if (badText != null) badText.text = r.bad.ToString();
-        if (missText != null) missText.text = r.miss.ToString();
+        if (perfectText != null) perfectText.text = "Perfect : " + r.perfect.ToString();
+        if (greatText != null) greatText.text = "Great : " + r.great.ToString();
+        if (goodText != null) goodText.text = "Good : " + r.good.ToString();
+        if (badText != null) badText.text = "Bad : " + r.bad.ToString();
+        if (missText != null) missText.text = "Miss : " + r.miss.ToString();
+        if (maxComboText != null) maxComboText.text = $"MAX COMBO \n {r.maxCombo}";
+
+        TextMeshProUGUI[] judgeLines = { perfectText, greatText, goodText, badText, missText };
+        for (int i = 0; i < judgeLines.Length; i++)
+        {
+            if (judgeLines[i] != null)
+                judgeLines[i].color = JudgeColor(i);
+        }
 
         if (fcApText != null)
         {
-            fcApText.text = !r.cleared ? "FAILED"
-                : r.allPerfect ? "ALL PERFECT"
-                : r.fullCombo ? "FULL COMBO"
-                : "CLEAR";
+            bool showFcAp = r.allPerfect || r.fullCombo;
+            fcApText.gameObject.SetActive(showFcAp);
+            if (showFcAp)
+                fcApText.text = r.allPerfect ? "ALL PERFECT" : "FULL COMBO";
         }
     }
 
-    public void Retry() => SceneManager.LoadScene("GameScene");
+    private void PlayClearSequence(GameResult r)
+    {
+        bannerText.text = "STAGE CLEAR";
+        bannerText.color = Color.white;
 
-    public void GoToLobby() => SceneManager.LoadScene("LobyScene");
+        // 카운트업/순차 등장 대상 초기화.
+        if (scoreText != null) scoreText.text = "SCORE \n 0";
+        if (accText != null) accText.text = "0.00%";
+        if (maxComboText != null) maxComboText.text = "MAX COMBO \n 0";
+        TextMeshProUGUI[] judgeLines = { perfectText, greatText, goodText, badText, missText };
+        foreach (TextMeshProUGUI line in judgeLines)
+        {
+            if (line == null) continue;
+            line.alpha = 0f;
+            line.transform.localScale = Vector3.one;
+        }
+
+        sequence?.Kill();
+        sequence = DOTween.Sequence();
+
+        sequence.Append(bannerGroup.DOFade(1f, 0.2f));
+        if (bannerBurst != null)
+        {
+            TintBurst(new Color(0.75f, 0.95f, 1f, 0.6f));
+            bannerBurst.localScale = Vector3.zero;
+            bannerBurst.localEulerAngles = new Vector3(0f, 0f, -20f);
+            sequence.Join(bannerBurst.DOScale(1.15f, 0.35f).SetEase(Ease.OutBack));
+            sequence.Join(bannerBurst.DORotate(new Vector3(0f, 0f, 10f), 0.6f));
+        }
+        sequence.Join(bannerText.transform.DOScale(1f, 0.3f).From(0.7f).SetEase(Ease.OutBack));
+
+        sequence.AppendInterval(GameConfig.ResultIntroHoldSeconds);
+        sequence.Append(bannerGroup.DOFade(0f, GameConfig.ResultIntroBannerMoveSeconds));
+        sequence.Join(bannerGroup.transform.DOLocalMoveY(120f, GameConfig.ResultIntroBannerMoveSeconds).SetRelative());
+
+        float fade = GameConfig.ResultPanelFadeSeconds;
+        float stagger = GameConfig.ResultPanelStaggerSeconds;
+        AppendGroupFade(songGroup, fade, 0f);
+        AppendGroupFade(rankGroup, fade, stagger);
+
+        // Score/ACC 카운트업 + 게이지 채움을 한 블록에서 동시에.
+        // rankGroup 페이드인 뒤이므로 시퀀스에 항상 선행 스텝이 있어 첫 트윈도 Join 해도 안전.
+        if (scoreText != null)
+        {
+            int scoreShown = 0;
+            sequence.Join(DOTween.To(() => scoreShown, v =>
+            {
+                scoreShown = v;
+                scoreText.text = $"SCORE \n {v}";
+            }, r.score, GameConfig.ResultCountUpSeconds).SetEase(Ease.OutCubic));
+        }
+        if (accText != null)
+        {
+            float accShown = 0f;
+            sequence.Join(DOTween.To(() => accShown, v =>
+            {
+                accShown = v;
+                accText.text = $"{v:F2}%";
+            }, r.accuracy, GameConfig.ResultCountUpSeconds).SetEase(Ease.OutCubic));
+        }
+        if (maxComboText != null)
+        {
+            int comboShown = 0;
+            sequence.Join(DOTween.To(() => comboShown, v =>
+            {
+                comboShown = v;
+                maxComboText.text = $"MAX COMBO \n {v}";
+            }, r.maxCombo, GameConfig.ResultCountUpSeconds).SetEase(Ease.OutCubic));
+        }
+        if (rankGaugeFill != null)
+        {
+            rankGaugeFill.color = GradeColor(r.grade);
+            sequence.Join(rankGaugeFill.DOFillAmount(Mathf.Clamp01(r.accuracy / 100f), GameConfig.RankGaugeFillSeconds)
+                .SetEase(Ease.OutCubic));
+        }
+
+        AppendGroupFade(judgeGroup, fade, stagger);
+
+        // 판정 갯수 한 줄씩 순차 팝 등장 (숫자는 이미 최종값).
+        foreach (TextMeshProUGUI line in judgeLines)
+        {
+            if (line == null) continue;
+            sequence.Append(line.DOFade(1f, GameConfig.ResultJudgeLineFadeSeconds));
+            sequence.Join(line.transform.DOScale(1f, GameConfig.ResultJudgeLineFadeSeconds).From(0.6f).SetEase(Ease.OutBack));
+            sequence.AppendInterval(GameConfig.ResultJudgeLineStaggerSeconds);
+        }
+
+        if ((r.allPerfect || r.fullCombo) && fcApText != null)
+        {
+            sequence.Append(fcApText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
+        }
+
+        AppendRetryButtonReveal();
+    }
+
+    private void PlayFailSequence()
+    {
+        // 실패 시엔 결과값을 보여주지 않고 배너만 띄운 채 정지한다.
+        // TODO: 로비씬(LobyScene)이 생기면 여기서 일정 시간 후 로비로 이동시킨다.
+        bannerText.text = "STAGE FAILED";
+        bannerText.color = new Color(1f, 0.4f, 0.4f);
+
+        sequence?.Kill();
+        sequence = DOTween.Sequence();
+        sequence.Append(bannerGroup.DOFade(1f, 0.3f));
+        if (bannerBurst != null)
+        {
+            TintBurst(new Color(1f, 0.4f, 0.4f, 0.55f));
+            bannerBurst.localScale = Vector3.zero;
+            sequence.Join(bannerBurst.DOScale(0.9f, 0.4f).SetEase(Ease.OutCubic));
+        }
+        sequence.Join(bannerText.transform.DOScale(1f, 0.35f).From(0.7f).SetEase(Ease.OutBack));
+
+        sequence.AppendInterval(GameConfig.ResultIntroHoldSeconds);
+        AppendRetryButtonReveal();
+    }
+
+    /// <summary>시퀀스 끝에 "다시하기" 버튼 페이드인 + 인터랙션 활성화를 붙인다.</summary>
+    private void AppendRetryButtonReveal()
+    {
+        if (retryButtonGroup == null)
+            return;
+
+        sequence.Append(retryButtonGroup.DOFade(1f, GameConfig.ResultPanelFadeSeconds));
+        sequence.AppendCallback(() => SetButtonInteractable(true));
+    }
+
+    private void SetButtonInteractable(bool value)
+    {
+        if (retryButtonGroup == null)
+            return;
+
+        retryButtonGroup.interactable = value;
+        retryButtonGroup.blocksRaycasts = value;
+    }
+
+    private void TintBurst(Color color)
+    {
+        if (bannerBurst == null)
+            return;
+
+        Image img = bannerBurst.GetComponent<Image>();
+        if (img != null)
+            img.color = color;
+    }
+
+    private void AppendGroupFade(CanvasGroup group, float duration, float delayBefore)
+    {
+        if (group == null)
+            return;
+
+        if (delayBefore > 0f)
+            sequence.AppendInterval(delayBefore);
+
+        sequence.Append(group.DOFade(1f, duration));
+    }
+
+    private void FillGauge(GameResult r)
+    {
+        if (rankGaugeFill == null)
+            return;
+
+        rankGaugeFill.color = GradeColor(r.grade);
+        rankGaugeFill.fillAmount = 0f;
+        rankGaugeFill.DOFillAmount(Mathf.Clamp01(r.accuracy / 100f), GameConfig.RankGaugeFillSeconds).SetEase(Ease.OutCubic);
+    }
+
+    private static void SetGroupAlpha(CanvasGroup group, float alpha)
+    {
+        if (group != null)
+            group.alpha = alpha;
+    }
+
+    /// <summary>판정 줄 인덱스(0=Perfect … 4=Miss) → 표시색. 단순 표시색이라 GameConfig 로 안 뺀다.</summary>
+    private static Color JudgeColor(int index)
+    {
+        switch (index)
+        {
+            case 0: return new Color(0.3f, 0.9f, 1f);    // Perfect - 시안
+            case 1: return new Color(0.5f, 1f, 0.5f);    // Great - 초록
+            case 2: return new Color(1f, 0.9f, 0.4f);    // Good - 노랑
+            case 3: return new Color(1f, 0.6f, 0.35f);   // Bad - 주황
+            default: return new Color(1f, 0.4f, 0.4f);   // Miss - 레드
+        }
+    }
+
+    /// <summary>등급 문자 → 게이지 채움 색. 단순 표시색이라 GameConfig 로 빼지 않는다.</summary>
+    private static Color GradeColor(string grade)
+    {
+        switch (grade)
+        {
+            case "S": return new Color(1f, 0.84f, 0.2f);   // 골드
+            case "A": return new Color(0.6f, 1f, 0.3f);    // 라임
+            case "B": return new Color(0.3f, 0.9f, 1f);    // 시안
+            case "C": return new Color(0.35f, 0.6f, 1f);   // 블루
+            case "D": return new Color(0.7f, 0.7f, 0.7f);  // 그레이
+            case "F": return new Color(1f, 0.35f, 0.35f);  // 레드
+            default: return Color.white;
+        }
+    }
+
+    public void Retry() => SceneFader.Load("GameScene");
+
+    public void GoToLobby() => SceneFader.Load("LobyScene");
 
     /// <summary>
     /// "/" 등 경로 구분자로 오인될 수 있는 이름도 안전하게 찾기 위해 GameObject.Find 대신
@@ -97,6 +361,30 @@ public class ResultView : MonoBehaviour
             var t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
             if (t != null)
                 return t;
+        }
+
+        return null;
+    }
+
+    private static Image FindImageByName(string exactName)
+    {
+        Image[] images = FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Image img in images)
+        {
+            if (img.gameObject.name == exactName)
+                return img;
+        }
+
+        return null;
+    }
+
+    private static T FindByName<T>(string exactName) where T : Component
+    {
+        T[] comps = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (T comp in comps)
+        {
+            if (comp.gameObject.name == exactName)
+                return comp;
         }
 
         return null;
