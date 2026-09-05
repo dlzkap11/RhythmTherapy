@@ -211,7 +211,7 @@ namespace RhythmTherapy.EditorTools
             Stretch(banner);
             banner.SetAsLastSibling();
 
-            Sprite burstSprite = LoadArtSprite("Assets/Resources/Arts/judgment_perfect.png", "judgment_perfect_0");
+            Sprite burstSprite = LoadBurstSprite();
 
             RectTransform burst = FindChild(banner, "BannerBurst");
             if (burst == null)
@@ -223,7 +223,8 @@ namespace RhythmTherapy.EditorTools
             Image burstImg = burst.GetComponent<Image>() ?? burst.gameObject.AddComponent<Image>();
             burstImg.sprite = burstSprite;
             burstImg.raycastTarget = false;
-            burstImg.color = new Color(1f, 1f, 1f, 0.5f);
+            // 색은 런타임(ResultView)에서 상태별로 티팅한다. 여기선 흰색 기본.
+            burstImg.color = new Color(1f, 1f, 1f, 0.55f);
             burst.anchorMin = burst.anchorMax = new Vector2(0.5f, 0.5f);
             burst.pivot = new Vector2(0.5f, 0.5f);
             burst.anchoredPosition = Vector2.zero;
@@ -249,15 +250,14 @@ namespace RhythmTherapy.EditorTools
             text.sizeDelta = new Vector2(900f, 160f);
         }
 
-        static Sprite LoadArtSprite(string assetPath, string spriteName)
+        /// <summary>result_burst 스프라이트 로드. 없으면 생성기로 먼저 만든다.</summary>
+        static Sprite LoadBurstSprite()
         {
-            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(assetPath))
-            {
-                if (o is Sprite s && s.name == spriteName)
-                    return s;
-            }
+            const string path = "Assets/Resources/Arts/result_burst.png";
+            if (!System.IO.File.Exists(path))
+                BurstSpriteGenerator.Generate();
 
-            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         static Image GetOrCreateGaugeImage(RectTransform parent, string name, Sprite sprite)

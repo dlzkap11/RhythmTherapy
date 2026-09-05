@@ -58,7 +58,7 @@ namespace RhythmTherapy.EditorTools
             group.interactable = false;
             group.blocksRaycasts = false;
 
-            Sprite burstSprite = LoadArtSprite("Assets/Resources/Arts/judgment_perfect.png", "judgment_perfect_0");
+            Sprite burstSprite = LoadBurstSprite();
 
             RectTransform burst = FindChild(hud.transform, "FullComboBurst");
             if (burst == null)
@@ -105,15 +105,13 @@ namespace RhythmTherapy.EditorTools
             rt.sizeDelta = size;
         }
 
-        static Sprite LoadArtSprite(string assetPath, string spriteName)
+        static Sprite LoadBurstSprite()
         {
-            foreach (Object o in AssetDatabase.LoadAllAssetsAtPath(assetPath))
-            {
-                if (o is Sprite s && s.name == spriteName)
-                    return s;
-            }
+            const string path = "Assets/Resources/Arts/result_burst.png";
+            if (!System.IO.File.Exists(path))
+                BurstSpriteGenerator.Generate();
 
-            return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
         static GameObject Find(string name)

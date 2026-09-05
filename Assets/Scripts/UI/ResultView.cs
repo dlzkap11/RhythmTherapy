@@ -140,6 +140,7 @@ public class ResultView : MonoBehaviour
         sequence.Append(bannerGroup.DOFade(1f, 0.2f));
         if (bannerBurst != null)
         {
+            TintBurst(new Color(0.75f, 0.95f, 1f, 0.6f));
             bannerBurst.localScale = Vector3.zero;
             bannerBurst.localEulerAngles = new Vector3(0f, 0f, -20f);
             sequence.Join(bannerBurst.DOScale(1.15f, 0.35f).SetEase(Ease.OutBack));
@@ -212,10 +213,21 @@ public class ResultView : MonoBehaviour
         sequence.Append(bannerGroup.DOFade(1f, 0.3f));
         if (bannerBurst != null)
         {
+            TintBurst(new Color(1f, 0.4f, 0.4f, 0.55f));
             bannerBurst.localScale = Vector3.zero;
             sequence.Join(bannerBurst.DOScale(0.9f, 0.4f).SetEase(Ease.OutCubic));
         }
         sequence.Join(bannerText.transform.DOScale(1f, 0.35f).From(0.7f).SetEase(Ease.OutBack));
+    }
+
+    private void TintBurst(Color color)
+    {
+        if (bannerBurst == null)
+            return;
+
+        Image img = bannerBurst.GetComponent<Image>();
+        if (img != null)
+            img.color = color;
     }
 
     private void AppendGroupFade(CanvasGroup group, float duration, float delayBefore)
