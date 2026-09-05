@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -12,6 +12,10 @@ public class JudgementView : MonoBehaviour
     // 가능성 있음
     // 어차피 텍스트니까 프리팹은 하나를 두고
     // 생성되면서 해당 판정값을 넣어주면 딱딱딱 아님?
+
+    [Header("연출")]
+    [SerializeField] private float floatUpDistance = 40f;
+    [SerializeField] private float duration = 0.8f;
 
     private Queue<GameObject> judgePool = new Queue<GameObject>();
     private const int MAX_POOL_SIZE = 30;
@@ -58,20 +62,25 @@ public class JudgementView : MonoBehaviour
         Vector3 spawnPos = parentLane.position;
 
         GameObject judge = judgePool.Dequeue();
+        var rt = judge.GetComponent<RectTransform>();
+        var tmp = judge.GetComponent<TextMeshProUGUI>();
+
+        // 재사용 대비: 이전 트윈 정리 + 알파 리셋
+        rt.DOKill();
+        tmp.DOKill();
+        Color c = tmp.color;
+        c.a = 1f;
+        tmp.color = c;
+
         judge.transform.position = spawnPos;
         judge.transform.SetParent(parentLane);
-        judge.GetComponent<TextMeshProUGUI>().text = GameManager.Instance.JudgeAC.ToString();
+        tmp.text = GameManager.Instance.JudgeAC.ToString();
 
         judge.SetActive(true);
-        // TODO DOTween같은 거로 생성되면 위로 조금씩 움직이면서 투명해지면서 사라지기
-        StartCoroutine(DeactivateAfterDelay(judge, 1f));
-    }
 
-    private IEnumerator DeactivateAfterDelay(GameObject obj, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-
-        Release(obj);
+        // 위로 상승하며 서서히 투명해지다 사라짐 → 끝나면 풀로 반납
+        rt.DOAnchorPosY(rt.anchoredPosition.y + floatUpDistance, duration).SetEase(Ease.OutCubic);
+        tmp.DOFade(0f, duration).SetEase(Ease.InQuad).OnComplete(() => Release(judge));
     }
 
     public void Release(GameObject go)

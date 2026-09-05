@@ -56,11 +56,11 @@ public class ResultView : MonoBehaviour
         if (accText != null) accText.text = $"{r.accuracy:F2}%";
         if (rankText != null) rankText.text = string.IsNullOrEmpty(r.grade) ? "-" : r.grade;
         if (songNameText != null) songNameText.text = r.songName;
-        if (perfectText != null) perfectText.text = r.perfect.ToString();
-        if (greatText != null) greatText.text = r.great.ToString();
-        if (goodText != null) goodText.text = r.good.ToString();
-        if (badText != null) badText.text = r.bad.ToString();
-        if (missText != null) missText.text = r.miss.ToString();
+        if (perfectText != null) perfectText.text = "Perfect : " + r.perfect.ToString();
+        if (greatText != null) greatText.text = "Great : " + r.great.ToString();
+        if (goodText != null) goodText.text = "Good : " + r.good.ToString();
+        if (badText != null) badText.text = "Bad : " + r.bad.ToString();
+        if (missText != null) missText.text = "Miss : " + r.miss.ToString();
 
         if (fcApText != null)
         {
