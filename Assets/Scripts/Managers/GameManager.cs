@@ -2,7 +2,6 @@ using RhythmTherapy.Core;
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 판정 이벤트를 받아 게임플레이 시스템(콤보/HP/점수/정확도)을 조립하는 허브.
@@ -252,6 +251,6 @@ public sealed class GameManager : MonoBehaviour
         yield return new WaitForSeconds(GameConfig.ResultDelaySeconds);
 
         GameSession.LastResult = result;
-        SceneManager.LoadScene("ResultScene");
+        SceneFader.Load("ResultScene");
     }
 }

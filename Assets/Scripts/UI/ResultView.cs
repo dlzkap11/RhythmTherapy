@@ -2,7 +2,6 @@ using DG.Tweening;
 using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -336,9 +335,9 @@ public class ResultView : MonoBehaviour
         }
     }
 
-    public void Retry() => SceneManager.LoadScene("GameScene");
+    public void Retry() => SceneFader.Load("GameScene");
 
-    public void GoToLobby() => SceneManager.LoadScene("LobyScene");
+    public void GoToLobby() => SceneFader.Load("LobyScene");
 
     /// <summary>
     /// "/" 등 경로 구분자로 오인될 수 있는 이름도 안전하게 찾기 위해 GameObject.Find 대신

@@ -44,6 +44,8 @@ namespace RhythmTherapy.Core
         public const float ResultJudgeLineStaggerSeconds = 0.1f;
         /// <summary>GameScene 풀콤보 연출 배너가 화면에 머무는 시간(초).</summary>
         public const float FullComboHoldSeconds = 0.7f;
+        /// <summary>씬 전환 검정 페이드 편도(아웃 또는 인) 시간(초).</summary>
+        public const float SceneFadeSeconds = 0.3f;
 
         /// <summary>정확도(0~100) 구간 하한 → 등급. 높은 구간부터 순서대로 검사.</summary>
         public struct GradeThreshold
