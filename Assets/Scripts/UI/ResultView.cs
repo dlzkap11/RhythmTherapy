@@ -24,6 +24,7 @@ public class ResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI badText;
     [SerializeField] private TextMeshProUGUI missText;
     [SerializeField] private TextMeshProUGUI fcApText;
+    [SerializeField] private TextMeshProUGUI maxComboText;
     [SerializeField] private Image rankGaugeFill;
 
     [Header("연출")]
@@ -33,6 +34,7 @@ public class ResultView : MonoBehaviour
     [SerializeField] private CanvasGroup songGroup;
     [SerializeField] private CanvasGroup rankGroup;
     [SerializeField] private CanvasGroup judgeGroup;
+    [SerializeField] private CanvasGroup retryButtonGroup;
 
     [Header("버튼 (선택, 비워도 무방)")]
     [SerializeField] private Button retryButton;
@@ -56,6 +58,8 @@ public class ResultView : MonoBehaviour
             SetGroupAlpha(songGroup, 1f);
             SetGroupAlpha(rankGroup, 1f);
             SetGroupAlpha(judgeGroup, 1f);
+            SetGroupAlpha(retryButtonGroup, 1f);
+            SetButtonInteractable(true);
             FillGauge(r);
             return;
         }
@@ -63,6 +67,8 @@ public class ResultView : MonoBehaviour
         SetGroupAlpha(songGroup, 0f);
         SetGroupAlpha(rankGroup, 0f);
         SetGroupAlpha(judgeGroup, 0f);
+        SetGroupAlpha(retryButtonGroup, 0f);
+        SetButtonInteractable(false);
         bannerGroup.alpha = 0f;
         if (rankGaugeFill != null) rankGaugeFill.fillAmount = 0f;
         if (fcApText != null) fcApText.transform.localScale = Vector3.one;
@@ -87,6 +93,7 @@ public class ResultView : MonoBehaviour
         if (badText == null) badText = FindTextByName("Bad");
         if (missText == null) missText = FindTextByName("Miss");
         if (fcApText == null) fcApText = FindTextByName("FcAp");
+        if (maxComboText == null) maxComboText = FindTextByName("MaxCombo");
         if (rankGaugeFill == null) rankGaugeFill = FindImageByName("GaugeFill");
 
         if (bannerGroup == null) bannerGroup = FindByName<CanvasGroup>("IntroBanner");
@@ -95,6 +102,8 @@ public class ResultView : MonoBehaviour
         if (songGroup == null) songGroup = FindByName<CanvasGroup>("SongPanel");
         if (rankGroup == null) rankGroup = FindByName<CanvasGroup>("RankPanel");
         if (judgeGroup == null) judgeGroup = FindByName<CanvasGroup>("JudgePanel");
+        if (retryButtonGroup == null) retryButtonGroup = FindByName<CanvasGroup>("RetryButton");
+        if (retryButton == null) retryButton = FindByName<Button>("RetryButton");
     }
 
     private void PopulateTexts(GameResult r)
@@ -108,6 +117,14 @@ public class ResultView : MonoBehaviour
         if (goodText != null) goodText.text = "Good : " + r.good.ToString();
         if (badText != null) badText.text = "Bad : " + r.bad.ToString();
         if (missText != null) missText.text = "Miss : " + r.miss.ToString();
+        if (maxComboText != null) maxComboText.text = $"MAX COMBO \n {r.maxCombo}";
+
+        TextMeshProUGUI[] judgeLines = { perfectText, greatText, goodText, badText, missText };
+        for (int i = 0; i < judgeLines.Length; i++)
+        {
+            if (judgeLines[i] != null)
+                judgeLines[i].color = JudgeColor(i);
+        }
 
         if (fcApText != null)
         {
@@ -126,6 +143,7 @@ public class ResultView : MonoBehaviour
         // 카운트업/순차 등장 대상 초기화.
         if (scoreText != null) scoreText.text = "SCORE \n 0";
         if (accText != null) accText.text = "0.00%";
+        if (maxComboText != null) maxComboText.text = "MAX COMBO \n 0";
         TextMeshProUGUI[] judgeLines = { perfectText, greatText, goodText, badText, missText };
         foreach (TextMeshProUGUI line in judgeLines)
         {
@@ -177,6 +195,15 @@ public class ResultView : MonoBehaviour
                 accText.text = $"{v:F2}%";
             }, r.accuracy, GameConfig.ResultCountUpSeconds).SetEase(Ease.OutCubic));
         }
+        if (maxComboText != null)
+        {
+            int comboShown = 0;
+            sequence.Join(DOTween.To(() => comboShown, v =>
+            {
+                comboShown = v;
+                maxComboText.text = $"MAX COMBO \n {v}";
+            }, r.maxCombo, GameConfig.ResultCountUpSeconds).SetEase(Ease.OutCubic));
+        }
         if (rankGaugeFill != null)
         {
             rankGaugeFill.color = GradeColor(r.grade);
@@ -199,6 +226,8 @@ public class ResultView : MonoBehaviour
         {
             sequence.Append(fcApText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
         }
+
+        AppendRetryButtonReveal();
     }
 
     private void PlayFailSequence()
@@ -218,6 +247,28 @@ public class ResultView : MonoBehaviour
             sequence.Join(bannerBurst.DOScale(0.9f, 0.4f).SetEase(Ease.OutCubic));
         }
         sequence.Join(bannerText.transform.DOScale(1f, 0.35f).From(0.7f).SetEase(Ease.OutBack));
+
+        sequence.AppendInterval(GameConfig.ResultIntroHoldSeconds);
+        AppendRetryButtonReveal();
+    }
+
+    /// <summary>시퀀스 끝에 "다시하기" 버튼 페이드인 + 인터랙션 활성화를 붙인다.</summary>
+    private void AppendRetryButtonReveal()
+    {
+        if (retryButtonGroup == null)
+            return;
+
+        sequence.Append(retryButtonGroup.DOFade(1f, GameConfig.ResultPanelFadeSeconds));
+        sequence.AppendCallback(() => SetButtonInteractable(true));
+    }
+
+    private void SetButtonInteractable(bool value)
+    {
+        if (retryButtonGroup == null)
+            return;
+
+        retryButtonGroup.interactable = value;
+        retryButtonGroup.blocksRaycasts = value;
     }
 
     private void TintBurst(Color color)
@@ -255,6 +306,19 @@ public class ResultView : MonoBehaviour
     {
         if (group != null)
             group.alpha = alpha;
+    }
+
+    /// <summary>판정 줄 인덱스(0=Perfect … 4=Miss) → 표시색. 단순 표시색이라 GameConfig 로 안 뺀다.</summary>
+    private static Color JudgeColor(int index)
+    {
+        switch (index)
+        {
+            case 0: return new Color(0.3f, 0.9f, 1f);    // Perfect - 시안
+            case 1: return new Color(0.5f, 1f, 0.5f);    // Great - 초록
+            case 2: return new Color(1f, 0.9f, 0.4f);    // Good - 노랑
+            case 3: return new Color(1f, 0.6f, 0.35f);   // Bad - 주황
+            default: return new Color(1f, 0.4f, 0.4f);   // Miss - 레드
+        }
     }
 
     /// <summary>등급 문자 → 게이지 채움 색. 단순 표시색이라 GameConfig 로 빼지 않는다.</summary>

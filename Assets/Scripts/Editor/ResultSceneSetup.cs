@@ -73,6 +73,8 @@ namespace RhythmTherapy.EditorTools
             BuildRankGauge();
             AddPanelCanvasGroups();
             BuildIntroBanner(host.transform);
+            BuildMaxComboText();
+            BuildRetryButton(host.transform);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -248,6 +250,88 @@ namespace RhythmTherapy.EditorTools
             text.pivot = new Vector2(0.5f, 0.5f);
             text.anchoredPosition = Vector2.zero;
             text.sizeDelta = new Vector2(900f, 160f);
+        }
+
+        /// <summary>RankPanel 에 Max Combo 표시 TMP 를 추가한다(없으면). Score 스타일을 복사. 재실행 안전.</summary>
+        static void BuildMaxComboText()
+        {
+            GameObject score = FindInScene("Score");
+            if (score == null)
+                return;
+
+            Transform parent = score.transform.parent;
+            TextMeshProUGUI src = score.GetComponent<TextMeshProUGUI>();
+
+            RectTransform rt = FindChild(parent, "MaxCombo");
+            if (rt == null)
+            {
+                GameObject go = new GameObject("MaxCombo", typeof(RectTransform));
+                rt = go.GetComponent<RectTransform>();
+                rt.SetParent(parent, false);
+            }
+
+            RectTransform srcRt = score.GetComponent<RectTransform>();
+            rt.anchorMin = srcRt.anchorMin;
+            rt.anchorMax = srcRt.anchorMax;
+            rt.pivot = srcRt.pivot;
+            rt.sizeDelta = srcRt.sizeDelta;
+            rt.anchoredPosition = srcRt.anchoredPosition + new Vector2(0f, -165f);
+
+            TextMeshProUGUI tmp = rt.GetComponent<TextMeshProUGUI>() ?? rt.gameObject.AddComponent<TextMeshProUGUI>();
+            tmp.text = "MAX COMBO \n 0";
+            tmp.alignment = src != null ? src.alignment : TextAlignmentOptions.Center;
+            tmp.fontSize = src != null ? src.fontSize : 28f;
+            tmp.color = Color.white;
+            if (src != null && src.font != null)
+                tmp.font = src.font;
+        }
+
+        /// <summary>
+        /// ResultHUD 하단 중앙에 "다시하기" 버튼을 구성한다(없으면). onClick 배선은 런타임(ResultView).
+        /// CanvasGroup 초기값은 숨김 — 시퀀스가 켠다. 재실행 안전.
+        /// </summary>
+        static void BuildRetryButton(Transform hud)
+        {
+            RectTransform rt = FindChild(hud, "RetryButton");
+            if (rt == null)
+            {
+                GameObject go = new GameObject("RetryButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(CanvasGroup));
+                rt = go.GetComponent<RectTransform>();
+                rt.SetParent(hud, false);
+            }
+
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, -430f);
+            rt.sizeDelta = new Vector2(360f, 92f);
+
+            Image bg = rt.GetComponent<Image>() ?? rt.gameObject.AddComponent<Image>();
+            bg.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            bg.type = Image.Type.Sliced;
+            bg.color = new Color(0.2f, 0.55f, 0.95f, 0.85f);
+
+            Button button = rt.GetComponent<Button>() ?? rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            CanvasGroup cg = rt.GetComponent<CanvasGroup>() ?? rt.gameObject.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            cg.interactable = false;
+            cg.blocksRaycasts = false;
+
+            RectTransform labelRt = FindChild(rt, "RetryLabel");
+            if (labelRt == null)
+            {
+                GameObject go = new GameObject("RetryLabel", typeof(RectTransform));
+                labelRt = go.GetComponent<RectTransform>();
+                labelRt.SetParent(rt, false);
+            }
+            Stretch(labelRt);
+            TextMeshProUGUI label = labelRt.GetComponent<TextMeshProUGUI>() ?? labelRt.gameObject.AddComponent<TextMeshProUGUI>();
+            label.text = "다시하기";
+            label.fontSize = 34f;
+            label.color = Color.white;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
         }
 
         /// <summary>result_burst 스프라이트 로드. 없으면 생성기로 먼저 만든다.</summary>
