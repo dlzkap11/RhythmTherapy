@@ -14,7 +14,8 @@ public class ComboView : MonoBehaviour
 
     private void OnDisable()
     {
-        GameManager.Instance.ComboChanged -= OnComboChanged;
+        if (GameManager.Instance != null)
+            GameManager.Instance.ComboChanged -= OnComboChanged;
     }
 
     private void OnComboChanged(int current)

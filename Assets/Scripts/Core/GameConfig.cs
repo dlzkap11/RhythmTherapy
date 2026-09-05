@@ -18,5 +18,33 @@ namespace RhythmTherapy.Core
         public const int HpHealPerHit = 2;
         /// <summary>이 콤보 이상일 때부터 판정 성공 시 HP 회복.</summary>
         public const int HpHealComboThreshold = 10;
+
+        // --- 곡 종료 판정 (임시 확정값) ---
+        /// <summary>마지막 노트 판정시간 이후 곡 종료로 간주하기까지 여유(ms). 판정/음악 꼬리가 재생될 시간.</summary>
+        public const int SongEndTailMs = 1500;
+        /// <summary>종료 감지 후 마지막 판정을 보여주고 ResultScene 으로 넘어가기까지 대기(초).</summary>
+        public const float ResultDelaySeconds = 1.5f;
+
+        /// <summary>정확도(0~100) 구간 하한 → 등급. 높은 구간부터 순서대로 검사.</summary>
+        public struct GradeThreshold
+        {
+            public string grade;
+            public float minAccuracy;
+
+            public GradeThreshold(string grade, float minAccuracy)
+            {
+                this.grade = grade;
+                this.minAccuracy = minAccuracy;
+            }
+        }
+
+        public static readonly GradeThreshold[] GradeThresholds =
+        {
+            new GradeThreshold("S", 95f),
+            new GradeThreshold("A", 90f),
+            new GradeThreshold("B", 80f),
+            new GradeThreshold("C", 70f),
+            new GradeThreshold("D", 60f),
+        };
     }
 }

@@ -1,9 +1,6 @@
-using NUnit.Framework.Internal.Commands;
-using RhythmTherapy.Core;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class JudgementView : MonoBehaviour
@@ -39,7 +36,8 @@ public class JudgementView : MonoBehaviour
 
     private void OnDestroy()
     {
-        GameManager.Instance.Judged -= JudgementDeath;
+        if (GameManager.Instance != null)
+            GameManager.Instance.Judged -= JudgementDeath;
     }
 
     // 레인을 받고 해당 레인 위치의 판정 보내기

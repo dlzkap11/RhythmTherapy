@@ -1,7 +1,3 @@
-using Codice.Client.BaseCommands;
-using UnityEngine;
-using static Codice.CM.Common.CmCallContext;
-
 namespace RhythmTherapy.Core
 {
     public sealed class ScoreSystem

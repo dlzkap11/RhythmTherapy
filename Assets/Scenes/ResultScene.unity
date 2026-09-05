@@ -496,6 +496,7 @@ GameObject:
   - component: {fileID: 687993240}
   - component: {fileID: 687993242}
   - component: {fileID: 687993241}
+  - component: {fileID: 687993243}
   m_Layer: 5
   m_Name: Result
   m_TagString: Untagged
@@ -622,6 +623,30 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 687993239}
   m_CullTransparentMesh: 1
+--- !u!114 &687993243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 687993239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 117451cb3999b8242803e8d48a0a590f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResultView
+  scoreText: {fileID: 0}
+  accText: {fileID: 0}
+  rankText: {fileID: 0}
+  songNameText: {fileID: 0}
+  perfectText: {fileID: 0}
+  greatText: {fileID: 0}
+  goodText: {fileID: 0}
+  badText: {fileID: 0}
+  missText: {fileID: 0}
+  fcApText: {fileID: 0}
+  retryButton: {fileID: 0}
+  lobbyButton: {fileID: 0}
 --- !u!1 &729226425
 GameObject:
   m_ObjectHideFlags: 0

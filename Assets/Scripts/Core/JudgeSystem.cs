@@ -41,5 +41,19 @@ namespace RhythmTherapy.Core
             score += (int)JudgeAC;
         }
 
+        /// <summary>노트 미처리(자동 Miss) 등, 오차값 없이 Miss 로 확정할 때 사용.</summary>
+        public JudgeType RegisterMiss()
+        {
+            JudgeAC = JudgeType.Miss;
+            JudgeAvg();
+            return JudgeAC;
+        }
+
+        /// <summary>다음 곡 시작 전 누적값 초기화.</summary>
+        public void Reset()
+        {
+            JudgeAC = default;
+            score = 0;
+        }
     }
 }
