@@ -26,6 +26,23 @@ public class Conductor : MonoBehaviour
     /// <summary>초 단위 재생 시간 (기존 코드 호환).</summary>
     public double SongTime => SongTimeMs / 1000.0;
 
+    /// <summary>
+    /// 설정된 클립 길이(ms). 클립이 없으면 0. 곡 종료 시각 산출에 사용.
+    /// songDataConfig 기준으로 조회 — PlayConfigured() 로 실제 재생이 시작되기 전
+    /// (NoteSpawn.Start() 가 songEndMs 를 계산하는 시점)에도 값을 알 수 있어야 하므로,
+    /// audioSource.clip(재생 시작 후에만 채워짐) 이 아니라 songDataConfig 를 우선 조회한다.
+    /// </summary>
+    public double ClipLengthMs
+    {
+        get
+        {
+            if (songDataConfig != null && songDataConfig.SongAudioClip != null)
+                return songDataConfig.SongAudioClip.length * 1000.0;
+
+            return audioSource != null && audioSource.clip != null ? audioSource.clip.length * 1000.0 : 0.0;
+        }
+    }
+
     public bool IsPlaying { get; private set; }
 
     private double dspStartTime;
@@ -42,7 +59,20 @@ public class Conductor : MonoBehaviour
 
     private void Start()
     {
-        if (playOnStart && songDataConfig != null && songDataConfig.SongAudioClip != null)
+        // 재생 전 노트 삽입이 끝나야 하므로(architecture.md §6), NoteSpawn 이 준비를 마친 뒤
+        // PlayConfigured() 를 호출해 재생을 시작한다. playOnStart 는 NoteSpawn 이 없는
+        // 상황(단독 테스트 등)을 대비한 폴백으로만 남겨둔다.
+        if (playOnStart && FindAnyObjectByType<NoteSpawn>() == null)
+            PlayConfigured();
+    }
+
+    /// <summary>인스펙터에 지정된 songDataConfig 클립으로 재생 시작. NoteSpawn 이 노트 삽입 후 호출.</summary>
+    public void PlayConfigured()
+    {
+        if (IsPlaying)
+            return;
+
+        if (songDataConfig != null && songDataConfig.SongAudioClip != null)
             Play(songDataConfig.SongAudioClip, startOffsetMs);
     }
 

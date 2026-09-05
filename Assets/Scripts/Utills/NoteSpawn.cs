@@ -1,8 +1,6 @@
 using RhythmTherapy.Core;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class NoteSpawn : MonoBehaviour
 {
@@ -24,13 +22,6 @@ public class NoteSpawn : MonoBehaviour
     private Queue<Note>[] activeByLane;
 
     private int index = 0;
-
-
-    [SerializeField] private float resultDelaySeconds = 1.5f;
-
-    private int activeNoteCount;
-    private bool allNotesSpawned;
-    private bool isEnding;
 
     private void Awake()
     {
@@ -60,9 +51,23 @@ public class NoteSpawn : MonoBehaviour
             laneCount: 2,
             bpm: 120f);
 
-        // 노래 재생 전에 레인별 노트 데이터 삽입 완료
+        // 노래 재생 전에 레인별 노트 데이터 삽입 완료 (architecture.md §6)
         for (int i = 0; i < testSong.NoteDatas.Count; i++)
             LaneManager.Instance.NoteAdd(testSong.NoteDatas[i]);
+
+        // 곡 종료 시각 = 마지막 노트 판정시간 + 여유(꼬리 재생 시간).
+        // 클립 길이는 Max 로 섞지 않는다 — 지금 채보(SongDataFactory 랜덤 생성)는 실제 오디오 길이와
+        // 무관하게 훨씬 짧아서, 클립 길이를 반영하면 노트가 다 끝나고도 한참(수 분) 더 대기하게 된다.
+        // 실제 채보가 오디오 전체 길이에 맞춰 만들어지면 그때 Conductor.ClipLengthMs 를 다시 고려한다.
+        int lastHitMs = testSong.NoteDatas.Count > 0
+            ? testSong.NoteDatas[testSong.NoteDatas.Count - 1].HitTimeMS
+            : 0;
+        Conductor conductor = Conductor.Instance;
+        int songEndMs = lastHitMs + GameConfig.SongEndTailMs;
+        GameManager.Instance.Configure(testSong.NoteDatas.Count, songEndMs, testSong.SongName);
+
+        // 노트 삽입이 끝난 뒤 재생 시작 (Conductor.Start() 는 NoteSpawn 이 있으면 자동재생 안 함)
+        conductor?.PlayConfigured();
     }
 
     private void OnDestroy()

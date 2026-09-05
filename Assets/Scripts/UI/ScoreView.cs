@@ -14,7 +14,8 @@ public class ScoreView : MonoBehaviour
 
     private void OnDisable()
     {
-        GameManager.Instance.ScoreChanged -= OnScoreChanged;
+        if (GameManager.Instance != null)
+            GameManager.Instance.ScoreChanged -= OnScoreChanged;
     }
 
     private void OnScoreChanged(int current, int cnt)
