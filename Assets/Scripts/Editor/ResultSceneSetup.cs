@@ -76,7 +76,7 @@ namespace RhythmTherapy.EditorTools
             AddPanelCanvasGroups();
             BuildIntroBanner(host.transform);
             BuildMaxComboText();
-            BuildRetryButton(host.transform);
+            BuildActionButtons(host.transform);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -289,28 +289,37 @@ namespace RhythmTherapy.EditorTools
         }
 
         /// <summary>
-        /// ResultHUD 하단 중앙에 "다시하기" 버튼을 구성한다(없으면). onClick 배선은 런타임(ResultView).
-        /// CanvasGroup 초기값은 숨김 — 시퀀스가 켠다. 재실행 안전.
+        /// ResultHUD 하단에 "다시하기" / "곡 선택" 버튼을 나란히 구성한다(없으면).
+        /// onClick 배선은 런타임(ResultView). CanvasGroup 초기값은 숨김 — 시퀀스가 켠다. 재실행 안전.
         /// </summary>
-        static void BuildRetryButton(Transform hud)
+        static void BuildActionButtons(Transform hud)
         {
-            RectTransform rt = FindChild(hud, "RetryButton");
+            BuildActionButton(hud, "RetryButton", "RetryLabel", "다시하기",
+                new Vector2(-200f, -430f), new Color(0.25f, 0.28f, 0.35f, 0.9f));
+            BuildActionButton(hud, "LobbyButton", "LobbyLabel", "곡 선택",
+                new Vector2(200f, -430f), new Color(0.16f, 0.7f, 0.45f, 0.9f));
+        }
+
+        static void BuildActionButton(Transform hud, string goName, string labelName, string labelText,
+            Vector2 anchoredPos, Color bgColor)
+        {
+            RectTransform rt = FindChild(hud, goName);
             if (rt == null)
             {
-                GameObject go = new GameObject("RetryButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(CanvasGroup));
+                GameObject go = new GameObject(goName, typeof(RectTransform), typeof(Image), typeof(Button), typeof(CanvasGroup));
                 rt = go.GetComponent<RectTransform>();
                 rt.SetParent(hud, false);
             }
 
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, -430f);
-            rt.sizeDelta = new Vector2(360f, 92f);
+            rt.anchoredPosition = anchoredPos;
+            rt.sizeDelta = new Vector2(370f, 90f);
 
             Image bg = rt.GetComponent<Image>() ?? rt.gameObject.AddComponent<Image>();
             bg.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             bg.type = Image.Type.Sliced;
-            bg.color = new Color(0.2f, 0.55f, 0.95f, 0.85f);
+            bg.color = bgColor;
 
             Button button = rt.GetComponent<Button>() ?? rt.gameObject.AddComponent<Button>();
             button.targetGraphic = bg;
@@ -320,16 +329,16 @@ namespace RhythmTherapy.EditorTools
             cg.interactable = false;
             cg.blocksRaycasts = false;
 
-            RectTransform labelRt = FindChild(rt, "RetryLabel");
+            RectTransform labelRt = FindChild(rt, labelName);
             if (labelRt == null)
             {
-                GameObject go = new GameObject("RetryLabel", typeof(RectTransform));
+                GameObject go = new GameObject(labelName, typeof(RectTransform));
                 labelRt = go.GetComponent<RectTransform>();
                 labelRt.SetParent(rt, false);
             }
             Stretch(labelRt);
             TextMeshProUGUI label = labelRt.GetComponent<TextMeshProUGUI>() ?? labelRt.gameObject.AddComponent<TextMeshProUGUI>();
-            label.text = "다시하기";
+            label.text = labelText;
             label.fontSize = 34f;
             label.color = Color.white;
             label.alignment = TextAlignmentOptions.Center;

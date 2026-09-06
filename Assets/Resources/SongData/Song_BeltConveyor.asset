@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 240e26989029c9741aadad70bbc34ae0, type: 3}
-  m_Name: Song_NeonDrift
+  m_Name: Song_BeltConveyor
   m_EditorClassIdentifier: Assembly-CSharp::SongDataConfig
-  SongID: 1
-  SongName: Neon Drift
+  SongID: 2
+  SongName: Jinsei wa Belt Conveyor no Youni Nagareru
   AlbumArt: {fileID: 0}
-  ThemeColor: {r: 1, g: 0.85, b: 0.2, a: 1}
-  SongAudioClip: {fileID: 8300000, guid: d4daa4735e656154694388d278f835d7, type: 3}
+  ThemeColor: {r: 0.7, g: 0.35, b: 0.95, a: 1}
+  SongAudioClip: {fileID: 8300000, guid: 55691b9d8f33e6d49b30324e79908dc1, type: 3}
   NoteDatas: []
