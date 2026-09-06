@@ -46,10 +46,6 @@ namespace RhythmTherapy.Core
         public const float FullComboHoldSeconds = 0.7f;
         /// <summary>씬 전환 검정 페이드 편도(아웃 또는 인) 시간(초).</summary>
         public const float SceneFadeSeconds = 0.3f;
-        /// <summary>로비 캐러셀에서 곡 한 칸을 넘길 때 슬라이드 시간(초).</summary>
-        public const float LobbySlideSeconds = 0.26f;
-        /// <summary>로비 미리듣기 곡 전환 시 볼륨 페이드 편도(초).</summary>
-        public const float LobbyPreviewFadeSeconds = 0.18f;
 
         /// <summary>정확도(0~100) 구간 하한 → 등급. 높은 구간부터 순서대로 검사.</summary>
         public struct GradeThreshold

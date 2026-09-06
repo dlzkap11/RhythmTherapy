@@ -1,9 +1,8 @@
 using DG.Tweening;
+using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
-using RhythmTherapy.Core;
 
 /// <summary>
 /// ResultScene 루트에 부착. GameManager.EndGame 이 GameSession.LastResult 에 채워 둔 결과를
@@ -11,7 +10,7 @@ using RhythmTherapy.Core;
 /// 이름으로 자동 탐색한다 (Score / ACC / Rank / SongName / 판정별 / FcAp / GaugeFill /
 /// SongPanel / RankPanel / JudgePanel / IntroBanner / BannerText / BannerBurst).
 /// </summary>
-public sealed class ResultView : MonoBehaviour
+public class ResultView : MonoBehaviour
 {
     [Header("비워두면 이름으로 자동 탐색")]
     [SerializeField] private TextMeshProUGUI scoreText;
@@ -35,7 +34,6 @@ public sealed class ResultView : MonoBehaviour
     [SerializeField] private CanvasGroup rankGroup;
     [SerializeField] private CanvasGroup judgeGroup;
     [SerializeField] private CanvasGroup retryButtonGroup;
-    [SerializeField] private CanvasGroup lobbyButtonGroup;
 
     [Header("버튼 (선택, 비워도 무방)")]
     [SerializeField] private Button retryButton;
@@ -60,7 +58,6 @@ public sealed class ResultView : MonoBehaviour
             SetGroupAlpha(rankGroup, 1f);
             SetGroupAlpha(judgeGroup, 1f);
             SetGroupAlpha(retryButtonGroup, 1f);
-            SetGroupAlpha(lobbyButtonGroup, 1f);
             SetButtonInteractable(true);
             FillGauge(r);
             return;
@@ -70,7 +67,6 @@ public sealed class ResultView : MonoBehaviour
         SetGroupAlpha(rankGroup, 0f);
         SetGroupAlpha(judgeGroup, 0f);
         SetGroupAlpha(retryButtonGroup, 0f);
-        SetGroupAlpha(lobbyButtonGroup, 0f);
         SetButtonInteractable(false);
         bannerGroup.alpha = 0f;
         if (rankGaugeFill != null) rankGaugeFill.fillAmount = 0f;
@@ -107,8 +103,6 @@ public sealed class ResultView : MonoBehaviour
         if (judgeGroup == null) judgeGroup = FindByName<CanvasGroup>("JudgePanel");
         if (retryButtonGroup == null) retryButtonGroup = FindByName<CanvasGroup>("RetryButton");
         if (retryButton == null) retryButton = FindByName<Button>("RetryButton");
-        if (lobbyButtonGroup == null) lobbyButtonGroup = FindByName<CanvasGroup>("LobbyButton");
-        if (lobbyButton == null) lobbyButton = FindByName<Button>("LobbyButton");
     }
 
     private void PopulateTexts(GameResult r)
@@ -232,7 +226,7 @@ public sealed class ResultView : MonoBehaviour
             sequence.Append(fcApText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
         }
 
-        AppendButtonRowReveal();
+        AppendRetryButtonReveal();
     }
 
     private void PlayFailSequence()
@@ -254,44 +248,26 @@ public sealed class ResultView : MonoBehaviour
         sequence.Join(bannerText.transform.DOScale(1f, 0.35f).From(0.7f).SetEase(Ease.OutBack));
 
         sequence.AppendInterval(GameConfig.ResultIntroHoldSeconds);
-        AppendButtonRowReveal();
+        AppendRetryButtonReveal();
     }
 
-    /// <summary>시퀀스 끝에 하단 버튼(다시하기 / 곡 선택) 페이드인 + 인터랙션 활성화를 붙인다.</summary>
-    private void AppendButtonRowReveal()
+    /// <summary>시퀀스 끝에 "다시하기" 버튼 페이드인 + 인터랙션 활성화를 붙인다.</summary>
+    private void AppendRetryButtonReveal()
     {
-        float fade = GameConfig.ResultPanelFadeSeconds;
-        bool appended = false;
+        if (retryButtonGroup == null)
+            return;
 
-        if (retryButtonGroup != null)
-        {
-            sequence.Append(retryButtonGroup.DOFade(1f, fade));
-            appended = true;
-        }
-        if (lobbyButtonGroup != null)
-        {
-            if (appended) sequence.Join(lobbyButtonGroup.DOFade(1f, fade));
-            else sequence.Append(lobbyButtonGroup.DOFade(1f, fade));
-            appended = true;
-        }
-
-        if (appended)
-            sequence.AppendCallback(() => SetButtonInteractable(true));
+        sequence.Append(retryButtonGroup.DOFade(1f, GameConfig.ResultPanelFadeSeconds));
+        sequence.AppendCallback(() => SetButtonInteractable(true));
     }
 
     private void SetButtonInteractable(bool value)
     {
-        SetGroupInteractable(retryButtonGroup, value);
-        SetGroupInteractable(lobbyButtonGroup, value);
-    }
-
-    private static void SetGroupInteractable(CanvasGroup group, bool value)
-    {
-        if (group == null)
+        if (retryButtonGroup == null)
             return;
 
-        group.interactable = value;
-        group.blocksRaycasts = value;
+        retryButtonGroup.interactable = value;
+        retryButtonGroup.blocksRaycasts = value;
     }
 
     private void TintBurst(Color color)
@@ -369,20 +345,20 @@ public sealed class ResultView : MonoBehaviour
     /// </summary>
     private static TextMeshProUGUI FindTextByName(string exactName)
     {
-        TextMeshProUGUI[] texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (TextMeshProUGUI t in texts)
+        var texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var t in texts)
         {
             if (t.gameObject.name == exactName)
                 return t;
         }
 
-        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (Transform tr in transforms)
+        var transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var tr in transforms)
         {
             if (tr.name != exactName)
                 continue;
 
-            TextMeshProUGUI t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
+            var t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
             if (t != null)
                 return t;
         }

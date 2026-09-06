@@ -64,10 +64,7 @@ public class NoteSpawn : MonoBehaviour
             : 0;
         Conductor conductor = Conductor.Instance;
         int songEndMs = lastHitMs + GameConfig.SongEndTailMs;
-
-        // 로비에서 고른 곡이 있으면 제목은 그걸 쓴다 (노트는 채보가 없어 아직 SongDataFactory).
-        string songName = SongSelection.Selected != null ? SongSelection.Selected.SongName : testSong.SongName;
-        GameManager.Instance.Configure(testSong.NoteDatas.Count, songEndMs, songName);
+        GameManager.Instance.Configure(testSong.NoteDatas.Count, songEndMs, testSong.SongName);
 
         // 노트 삽입이 끝난 뒤 재생 시작 (Conductor.Start() 는 NoteSpawn 이 있으면 자동재생 안 함)
         conductor?.PlayConfigured();
