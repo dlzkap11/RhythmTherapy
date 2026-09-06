@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using System.Linq;
 
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace RhythmTherapy.EditorTools
@@ -39,7 +41,7 @@ namespace RhythmTherapy.EditorTools
 
         static void EnsureBuildSettings()
         {
-            var scenes = EditorBuildSettings.scenes.ToList();
+            List<EditorBuildSettingsScene> scenes = EditorBuildSettings.scenes.ToList();
 
             AddIfMissing(scenes, GameScenePath);
             AddIfMissing(scenes, ResultScenePath);
@@ -48,7 +50,7 @@ namespace RhythmTherapy.EditorTools
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 
-        static void AddIfMissing(System.Collections.Generic.List<EditorBuildSettingsScene> scenes, string path)
+        static void AddIfMissing(List<EditorBuildSettingsScene> scenes, string path)
         {
             if (scenes.Any(s => s.path == path))
                 return;
@@ -58,13 +60,13 @@ namespace RhythmTherapy.EditorTools
 
         static void WireResultScene()
         {
-            var scene = EditorSceneManager.OpenScene(ResultScenePath, OpenSceneMode.Single);
+            Scene scene = EditorSceneManager.OpenScene(ResultScenePath, OpenSceneMode.Single);
 
             GameObject host = GameObject.Find("ResultHUD")
                 ?? GameObject.Find("Result")
                 ?? new GameObject("ResultView");
 
-            var view = host.GetComponent<ResultView>();
+            ResultView view = host.GetComponent<ResultView>();
             if (view == null)
                 view = host.AddComponent<ResultView>();
 

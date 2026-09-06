@@ -66,7 +66,8 @@ public sealed class GameManager : MonoBehaviour
         if (go == null)
             go = new GameObject("@Managers");
 
-        go.AddComponent<GameManager>();
+        if (go.GetComponent<GameManager>() == null)
+            go.AddComponent<GameManager>();
     }
 
     private void Awake()
@@ -84,6 +85,12 @@ public sealed class GameManager : MonoBehaviour
     private void Start()
     {
         LaneManager lm = LaneManager.Instance;
+        if (lm == null)
+        {
+            Debug.LogError("[GameManager] LaneManager.Instance 가 null — 판정 이벤트 구독 실패");
+            return;
+        }
+
         lm.NoteJudged += OnNoteJudged;
         lm.NoteAutoMissed += OnNoteAutoMissed;
     }

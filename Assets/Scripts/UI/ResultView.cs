@@ -1,8 +1,9 @@
 using DG.Tweening;
-using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
+using RhythmTherapy.Core;
 
 /// <summary>
 /// ResultScene 루트에 부착. GameManager.EndGame 이 GameSession.LastResult 에 채워 둔 결과를
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 /// 이름으로 자동 탐색한다 (Score / ACC / Rank / SongName / 판정별 / FcAp / GaugeFill /
 /// SongPanel / RankPanel / JudgePanel / IntroBanner / BannerText / BannerBurst).
 /// </summary>
-public class ResultView : MonoBehaviour
+public sealed class ResultView : MonoBehaviour
 {
     [Header("비워두면 이름으로 자동 탐색")]
     [SerializeField] private TextMeshProUGUI scoreText;
@@ -345,20 +346,20 @@ public class ResultView : MonoBehaviour
     /// </summary>
     private static TextMeshProUGUI FindTextByName(string exactName)
     {
-        var texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (var t in texts)
+        TextMeshProUGUI[] texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (TextMeshProUGUI t in texts)
         {
             if (t.gameObject.name == exactName)
                 return t;
         }
 
-        var transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (var tr in transforms)
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Transform tr in transforms)
         {
             if (tr.name != exactName)
                 continue;
 
-            var t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
+            TextMeshProUGUI t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
             if (t != null)
                 return t;
         }

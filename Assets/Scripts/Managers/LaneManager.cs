@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+
 using UnityEngine;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public class LaneManager : MonoBehaviour
 {
@@ -25,17 +24,18 @@ public class LaneManager : MonoBehaviour
 
     static void Init()
     {
-        if (instance == null)
-        {
+        if (instance != null)
+            return;
 
-            GameObject go = GameObject.Find("@Managers");
-            if (go == null)
-            {
-                go = new GameObject { name = "@Managers" };
-                go.AddComponent<LaneManager>();
-            }
-            DontDestroyOnLoad(go);
-        }
+        GameObject go = GameObject.Find("@Managers");
+        if (go == null)
+            go = new GameObject { name = "@Managers" };
+
+        // @Managers 가 이미 있어도 LaneManager 컴포넌트가 없으면 붙인다 (Awake 가 instance 세팅).
+        if (go.GetComponent<LaneManager>() == null)
+            go.AddComponent<LaneManager>();
+
+        DontDestroyOnLoad(go);
     }
 
     private void Awake()
