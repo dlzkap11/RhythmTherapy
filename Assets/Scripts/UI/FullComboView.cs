@@ -1,7 +1,8 @@
 using DG.Tweening;
-using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
+
+using RhythmTherapy.Core;
 
 /// <summary>
 /// GameScene 풀콤보/올퍼펙트 연출. 곡 종료(GameManager.Finished) 시 fullCombo 면

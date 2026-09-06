@@ -1,9 +1,10 @@
 using System.Collections;
 
-using RhythmTherapy.Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
+using RhythmTherapy.Core;
 
 /// <summary>
 /// 씬 전환 시 화면 전체를 검정으로 페이드 아웃 → 로드 → 페이드 인 한다.

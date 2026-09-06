@@ -10,6 +10,8 @@ public class SongDataConfig : ScriptableObject
     public int SongID;
     public string SongName;
     public Sprite AlbumArt;
+    /// <summary>앨범 아트가 없을 때 로비 캐러셀 원에 쓰는 대표 색.</summary>
+    public Color ThemeColor = Color.white;
     public AudioClip SongAudioClip;
 
 
