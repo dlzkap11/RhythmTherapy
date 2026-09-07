@@ -1,4 +1,5 @@
 using RhythmTherapy.Core;
+using RhythmTherapy.Managers;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -29,6 +30,7 @@ public sealed class GameManager : MonoBehaviour
     private int totalNotes;
     private int songEndMs;
     private string songName = string.Empty;
+    private int songID;
     private int perfectCount, greatCount, goodCount, badCount, missCount;
 
     public int Combo => combo.Current;
@@ -66,7 +68,8 @@ public sealed class GameManager : MonoBehaviour
         if (go == null)
             go = new GameObject("@Managers");
 
-        go.AddComponent<GameManager>();
+        if (go.GetComponent<GameManager>() == null)
+            go.AddComponent<GameManager>();
     }
 
     private void Awake()
@@ -84,6 +87,12 @@ public sealed class GameManager : MonoBehaviour
     private void Start()
     {
         LaneManager lm = LaneManager.Instance;
+        if (lm == null)
+        {
+            Debug.LogError("[GameManager] LaneManager.Instance 가 null — 판정 이벤트 구독 실패");
+            return;
+        }
+
         lm.NoteJudged += OnNoteJudged;
         lm.NoteAutoMissed += OnNoteAutoMissed;
     }
@@ -116,11 +125,12 @@ public sealed class GameManager : MonoBehaviour
     /// <param name="totalNoteCount">이번 곡의 전체 노트 수 (정확도/풀콤보 판정 기준).</param>
     /// <param name="songEndTimeMs">Conductor.SongTimeMs 기준 곡 종료 시각.</param>
     /// <param name="currentSongName">결과창에 표시할 곡 이름.</param>
-    public void Configure(int totalNoteCount, int songEndTimeMs, string currentSongName)
+    public void Configure(int totalNoteCount, int songEndTimeMs, string currentSongName, int currentsongID)
     {
         totalNotes = totalNoteCount;
         songEndMs = songEndTimeMs;
         songName = currentSongName ?? string.Empty;
+        songID = currentsongID;
 
         combo.Reset();
         hp.Reset();
@@ -225,6 +235,7 @@ public sealed class GameManager : MonoBehaviour
         var result = new GameResult
         {
             songName = songName,
+            songID = songID,
             score = score.CurrentScore,
             maxCombo = combo.Max,
             perfect = perfectCount,
@@ -240,7 +251,12 @@ public sealed class GameManager : MonoBehaviour
             allPerfect = cleared && totalNotes > 0 && perfectCount == totalNotes,
         };
 
-        Debug.Log($"[GameManager] 곡 종료 — cleared={cleared} score={result.score} acc={result.accuracy:F2} grade={result.grade}");
+        // 곡별 최고 기록에 반영하고, 신기록 여부를 결과에 담아 ResultScene 연출에 쓴다.
+        if (ScoreRecordManager.Instance != null)
+            result.isNewRecord = ScoreRecordManager.Instance.Submit(result);
+
+        Debug.Log($"[GameManager] 곡 종료 — cleared={cleared} score={result.score} acc={result.accuracy:F2} " +
+                  $"grade={result.grade} newRecord={result.isNewRecord}");
 
         Finished?.Invoke(result);
         StartCoroutine(ShowResultThenLoad(result));

@@ -1,9 +1,12 @@
 using RhythmTherapy.Core;
 using System.Collections.Generic;
+using Unity.Profiling;
 using UnityEngine;
 
 public class NoteSpawn : MonoBehaviour
 {
+    private static readonly ProfilerMarker s_updateMarker = new ProfilerMarker("Rhythm.NoteSpawn.Update");
+
     [SerializeField] private GameObject[] laneNotes;        // 레인별 스폰 위치
     [SerializeField] private Transform[] laneJudgeLines;    // 레인별 판정선 위치
 
@@ -64,7 +67,11 @@ public class NoteSpawn : MonoBehaviour
             : 0;
         Conductor conductor = Conductor.Instance;
         int songEndMs = lastHitMs + GameConfig.SongEndTailMs;
-        GameManager.Instance.Configure(testSong.NoteDatas.Count, songEndMs, testSong.SongName);
+
+        // 로비에서 고른 곡이 있으면 제목은 그걸 쓴다 (노트는 채보가 없어 아직 SongDataFactory).
+        string songName = SongSelection.Selected != null ? SongSelection.Selected.SongName : testSong.SongName;
+        int songID = SongSelection.Selected != null ? SongSelection.Selected.SongID : testSong.SongID;
+        GameManager.Instance.Configure(testSong.NoteDatas.Count, songEndMs, songName, songID);
 
         // 노트 삽입이 끝난 뒤 재생 시작 (Conductor.Start() 는 NoteSpawn 이 있으면 자동재생 안 함)
         conductor?.PlayConfigured();
@@ -81,28 +88,31 @@ public class NoteSpawn : MonoBehaviour
 
     private void Update()
     {
-        Conductor conductor = Conductor.Instance;
-        if (conductor == null)
-            return;
-
-        // InputManager.Pop 이 ns.playTime * 1000 으로 입력시간을 만든다 → 같은 시계 공유
-        playTime = conductor.SongTime;
-
-        double songMs = conductor.SongTimeMs;
-
-        // 판정시간 - 이동시간(ApproachMs) 이 되면 노트 활성화
-        while (index < testSong.NoteDatas.Count)
+        using (s_updateMarker.Auto())
         {
-            NoteData data = testSong.NoteDatas[index];
-            if (NoteMath.SpawnTimeMs(data.HitTimeMS, GameConfig.ApproachMs) > songMs)
-                break;
+            Conductor conductor = Conductor.Instance;
+            if (conductor == null)
+                return;
 
-            SpawnNote(data);
-            index++;
+            // InputManager.Pop 이 ns.playTime * 1000 으로 입력시간을 만든다 → 같은 시계 공유
+            playTime = conductor.SongTime;
+
+            double songMs = conductor.SongTimeMs;
+
+            // 판정시간 - 이동시간(ApproachMs) 이 되면 노트 활성화
+            while (index < testSong.NoteDatas.Count)
+            {
+                NoteData data = testSong.NoteDatas[index];
+                if (NoteMath.SpawnTimeMs(data.HitTimeMS, GameConfig.ApproachMs) > songMs)
+                    break;
+
+                SpawnNote(data);
+                index++;
+            }
+
+            // 판정선을 지나친 노트 자동 소비 → OnLaneNoteConsumed 로 시각 노트 해제
+            LaneManager.Instance.CollectAutoMisses((int)songMs);
         }
-
-        // 판정선을 지나친 노트 자동 소비 → OnLaneNoteConsumed 로 시각 노트 해제
-        LaneManager.Instance.CollectAutoMisses((int)songMs);
     }
 
     private void SpawnNote(NoteData data)

@@ -55,6 +55,13 @@ public class Conductor : MonoBehaviour
             return;
         }
         Instance = this;
+
+        QualitySettings.vSyncCount = 0;          // vSync 끄고
+        Application.targetFrameRate = 120;       // 명시적 타겟 (모니터 주사율 이상 권장)
+
+        // 로비에서 곡을 골라 넘어왔으면 그 곡을 재생 대상으로 사용.
+        if (SongSelection.Selected != null)
+            songDataConfig = SongSelection.Selected;
     }
 
     private void Start()

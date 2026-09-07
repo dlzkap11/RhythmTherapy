@@ -1,8 +1,9 @@
 using DG.Tweening;
-using RhythmTherapy.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
+using RhythmTherapy.Core;
 
 /// <summary>
 /// ResultScene 루트에 부착. GameManager.EndGame 이 GameSession.LastResult 에 채워 둔 결과를
@@ -10,7 +11,7 @@ using UnityEngine.UI;
 /// 이름으로 자동 탐색한다 (Score / ACC / Rank / SongName / 판정별 / FcAp / GaugeFill /
 /// SongPanel / RankPanel / JudgePanel / IntroBanner / BannerText / BannerBurst).
 /// </summary>
-public class ResultView : MonoBehaviour
+public sealed class ResultView : MonoBehaviour
 {
     [Header("비워두면 이름으로 자동 탐색")]
     [SerializeField] private TextMeshProUGUI scoreText;
@@ -23,6 +24,7 @@ public class ResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI badText;
     [SerializeField] private TextMeshProUGUI missText;
     [SerializeField] private TextMeshProUGUI fcApText;
+    [SerializeField] private TextMeshProUGUI newRecordText;
     [SerializeField] private TextMeshProUGUI maxComboText;
     [SerializeField] private Image rankGaugeFill;
 
@@ -34,6 +36,7 @@ public class ResultView : MonoBehaviour
     [SerializeField] private CanvasGroup rankGroup;
     [SerializeField] private CanvasGroup judgeGroup;
     [SerializeField] private CanvasGroup retryButtonGroup;
+    [SerializeField] private CanvasGroup lobbyButtonGroup;
 
     [Header("버튼 (선택, 비워도 무방)")]
     [SerializeField] private Button retryButton;
@@ -58,6 +61,7 @@ public class ResultView : MonoBehaviour
             SetGroupAlpha(rankGroup, 1f);
             SetGroupAlpha(judgeGroup, 1f);
             SetGroupAlpha(retryButtonGroup, 1f);
+            SetGroupAlpha(lobbyButtonGroup, 1f);
             SetButtonInteractable(true);
             FillGauge(r);
             return;
@@ -67,10 +71,12 @@ public class ResultView : MonoBehaviour
         SetGroupAlpha(rankGroup, 0f);
         SetGroupAlpha(judgeGroup, 0f);
         SetGroupAlpha(retryButtonGroup, 0f);
+        SetGroupAlpha(lobbyButtonGroup, 0f);
         SetButtonInteractable(false);
         bannerGroup.alpha = 0f;
         if (rankGaugeFill != null) rankGaugeFill.fillAmount = 0f;
         if (fcApText != null) fcApText.transform.localScale = Vector3.one;
+        if (newRecordText != null) newRecordText.transform.localScale = Vector3.one;
 
         if (r.cleared)
             PlayClearSequence(r);
@@ -92,6 +98,7 @@ public class ResultView : MonoBehaviour
         if (badText == null) badText = FindTextByName("Bad");
         if (missText == null) missText = FindTextByName("Miss");
         if (fcApText == null) fcApText = FindTextByName("FcAp");
+        if (newRecordText == null) newRecordText = FindTextByName("NewRecord");
         if (maxComboText == null) maxComboText = FindTextByName("MaxCombo");
         if (rankGaugeFill == null) rankGaugeFill = FindImageByName("GaugeFill");
 
@@ -103,6 +110,8 @@ public class ResultView : MonoBehaviour
         if (judgeGroup == null) judgeGroup = FindByName<CanvasGroup>("JudgePanel");
         if (retryButtonGroup == null) retryButtonGroup = FindByName<CanvasGroup>("RetryButton");
         if (retryButton == null) retryButton = FindByName<Button>("RetryButton");
+        if (lobbyButtonGroup == null) lobbyButtonGroup = FindByName<CanvasGroup>("LobbyButton");
+        if (lobbyButton == null) lobbyButton = FindByName<Button>("LobbyButton");
     }
 
     private void PopulateTexts(GameResult r)
@@ -131,6 +140,15 @@ public class ResultView : MonoBehaviour
             fcApText.gameObject.SetActive(showFcAp);
             if (showFcAp)
                 fcApText.text = r.allPerfect ? "ALL PERFECT" : "FULL COMBO";
+        }
+
+        // 신기록은 완주한 판에서만 의미가 있다 (실패 시 결과값 자체를 숨김).
+        if (newRecordText != null)
+        {
+            bool showNewRecord = r.cleared && r.isNewRecord;
+            newRecordText.gameObject.SetActive(showNewRecord);
+            if (showNewRecord)
+                newRecordText.text = "NEW RECORD";
         }
     }
 
@@ -226,13 +244,18 @@ public class ResultView : MonoBehaviour
             sequence.Append(fcApText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
         }
 
-        AppendRetryButtonReveal();
+        if (r.isNewRecord && newRecordText != null)
+        {
+            sequence.Append(newRecordText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
+        }
+
+        AppendButtonRowReveal();
     }
 
     private void PlayFailSequence()
     {
         // 실패 시엔 결과값을 보여주지 않고 배너만 띄운 채 정지한다.
-        // TODO: 로비씬(LobyScene)이 생기면 여기서 일정 시간 후 로비로 이동시킨다.
+        // TODO: 여기서 일정 시간 후 LobbyScene 으로 자동 이동시킨다 (현재는 버튼으로만 이동).
         bannerText.text = "STAGE FAILED";
         bannerText.color = new Color(1f, 0.4f, 0.4f);
 
@@ -248,26 +271,44 @@ public class ResultView : MonoBehaviour
         sequence.Join(bannerText.transform.DOScale(1f, 0.35f).From(0.7f).SetEase(Ease.OutBack));
 
         sequence.AppendInterval(GameConfig.ResultIntroHoldSeconds);
-        AppendRetryButtonReveal();
+        AppendButtonRowReveal();
     }
 
-    /// <summary>시퀀스 끝에 "다시하기" 버튼 페이드인 + 인터랙션 활성화를 붙인다.</summary>
-    private void AppendRetryButtonReveal()
+    /// <summary>시퀀스 끝에 하단 버튼(다시하기 / 곡 선택) 페이드인 + 인터랙션 활성화를 붙인다.</summary>
+    private void AppendButtonRowReveal()
     {
-        if (retryButtonGroup == null)
-            return;
+        float fade = GameConfig.ResultPanelFadeSeconds;
+        bool appended = false;
 
-        sequence.Append(retryButtonGroup.DOFade(1f, GameConfig.ResultPanelFadeSeconds));
-        sequence.AppendCallback(() => SetButtonInteractable(true));
+        if (retryButtonGroup != null)
+        {
+            sequence.Append(retryButtonGroup.DOFade(1f, fade));
+            appended = true;
+        }
+        if (lobbyButtonGroup != null)
+        {
+            if (appended) sequence.Join(lobbyButtonGroup.DOFade(1f, fade));
+            else sequence.Append(lobbyButtonGroup.DOFade(1f, fade));
+            appended = true;
+        }
+
+        if (appended)
+            sequence.AppendCallback(() => SetButtonInteractable(true));
     }
 
     private void SetButtonInteractable(bool value)
     {
-        if (retryButtonGroup == null)
+        SetGroupInteractable(retryButtonGroup, value);
+        SetGroupInteractable(lobbyButtonGroup, value);
+    }
+
+    private static void SetGroupInteractable(CanvasGroup group, bool value)
+    {
+        if (group == null)
             return;
 
-        retryButtonGroup.interactable = value;
-        retryButtonGroup.blocksRaycasts = value;
+        group.interactable = value;
+        group.blocksRaycasts = value;
     }
 
     private void TintBurst(Color color)
@@ -337,7 +378,7 @@ public class ResultView : MonoBehaviour
 
     public void Retry() => SceneFader.Load("GameScene");
 
-    public void GoToLobby() => SceneFader.Load("LobyScene");
+    public void GoToLobby() => SceneFader.Load("LobbyScene");
 
     /// <summary>
     /// "/" 등 경로 구분자로 오인될 수 있는 이름도 안전하게 찾기 위해 GameObject.Find 대신
@@ -345,20 +386,20 @@ public class ResultView : MonoBehaviour
     /// </summary>
     private static TextMeshProUGUI FindTextByName(string exactName)
     {
-        var texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (var t in texts)
+        TextMeshProUGUI[] texts = FindObjectsByType<TextMeshProUGUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (TextMeshProUGUI t in texts)
         {
             if (t.gameObject.name == exactName)
                 return t;
         }
 
-        var transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        foreach (var tr in transforms)
+        Transform[] transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (Transform tr in transforms)
         {
             if (tr.name != exactName)
                 continue;
 
-            var t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
+            TextMeshProUGUI t = tr.GetComponentInChildren<TextMeshProUGUI>(true);
             if (t != null)
                 return t;
         }

@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+
+using Unity.Profiling;
 using UnityEngine;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public class LaneManager : MonoBehaviour
 {
+    private static readonly ProfilerMarker s_judgeMarker = new ProfilerMarker("Rhythm.Lane.Judge");
+    private static readonly ProfilerMarker s_autoMissMarker = new ProfilerMarker("Rhythm.Lane.CollectAutoMisses");
+
     // 레인마다 리스트를 하나씩 가지고 해당 리스트에 노트배치데이터에 기반하여서 노트들을 저장한다.
     private static LaneManager instance;
     //public static LaneManager Instance => instance;
@@ -25,17 +28,18 @@ public class LaneManager : MonoBehaviour
 
     static void Init()
     {
-        if (instance == null)
-        {
+        if (instance != null)
+            return;
 
-            GameObject go = GameObject.Find("@Managers");
-            if (go == null)
-            {
-                go = new GameObject { name = "@Managers" };
-                go.AddComponent<LaneManager>();
-            }
-            DontDestroyOnLoad(go);
-        }
+        GameObject go = GameObject.Find("@Managers");
+        if (go == null)
+            go = new GameObject { name = "@Managers" };
+
+        // @Managers 가 이미 있어도 LaneManager 컴포넌트가 없으면 붙인다 (Awake 가 instance 세팅).
+        if (go.GetComponent<LaneManager>() == null)
+            go.AddComponent<LaneManager>();
+
+        DontDestroyOnLoad(go);
     }
 
     private void Awake()
@@ -78,51 +82,55 @@ public class LaneManager : MonoBehaviour
 
     public void FindAndGetNote(int lane, int currentInputTimeMs)
     {
-        //해당 레인의 노트를 순회
-        while (currentIndexes[lane] < laneNotes[lane].Count)
+        using (s_judgeMarker.Auto())
         {
-            NoteData note = laneNotes[lane][currentIndexes[lane]];
-
-            Debug.Log($"입력시간 :{currentInputTimeMs}, 판정시간 : {note.HitTimeMS}");
-            // 이미 지나간 노트는 자동 소멸 처리하며 스킵
-            if (note.HitTimeMS < currentInputTimeMs - JUDGE_RANGE_MS)
+            //해당 레인의 노트를 순회
+            while (currentIndexes[lane] < laneNotes[lane].Count)
             {
+                NoteData note = laneNotes[lane][currentIndexes[lane]];
+
+                Debug.Log($"입력시간 :{currentInputTimeMs}, 판정시간 : {note.HitTimeMS}");
+                // 이미 지나간 노트는 자동 소멸 처리하며 스킵
+                if (note.HitTimeMS < currentInputTimeMs - JUDGE_RANGE_MS)
+                {
+                    currentIndexes[lane]++;
+                    NoteAutoMissed?.Invoke(lane);
+                    continue;
+                }
+
+                //입력시간 - 노트판정시간
+                int error = Mathf.Abs(currentInputTimeMs - note.HitTimeMS);
+
+                //판정 범위 밖
+                if (error > JUDGE_RANGE_MS)
+                {
+                    break;
+                }
+
+                // 범위 안 노트를 찾으면 소비하고 반환
                 currentIndexes[lane]++;
-                NoteAutoMissed?.Invoke(lane);
-                continue;
+                NoteJudged?.Invoke(error, lane);
+                NoteJudgedLane?.Invoke(lane);
             }
-
-            //입력시간 - 노트판정시간
-            int error = Mathf.Abs(currentInputTimeMs - note.HitTimeMS);
-
-            //판정 범위 밖
-            if (error > JUDGE_RANGE_MS)
-            {
-                break;
-            }
-
-            // 범위 안 노트를 찾으면 소비하고 반환
-            currentIndexes[lane]++;
-            NoteJudged?.Invoke(error, lane);
-            NoteJudgedLane?.Invoke(lane);
-
         }
-
     }
 
     // 판정선을 지나쳐(판정범위 밖으로 넘어가) 자동 소멸되는 노트들을 소비한다. 매 프레임 호출.
     public void CollectAutoMisses(int songTimeMs)
     {
-        if (laneNotes == null)
-            return;
-
-        for (int lane = 0; lane < laneNotes.Length; lane++)
+        using (s_autoMissMarker.Auto())
         {
-            while (currentIndexes[lane] < laneNotes[lane].Count &&
-                   songTimeMs - JUDGE_RANGE_MS > laneNotes[lane][currentIndexes[lane]].HitTimeMS)
+            if (laneNotes == null)
+                return;
+
+            for (int lane = 0; lane < laneNotes.Length; lane++)
             {
-                currentIndexes[lane]++;
-                NoteAutoMissed?.Invoke(lane);
+                while (currentIndexes[lane] < laneNotes[lane].Count &&
+                       songTimeMs - JUDGE_RANGE_MS > laneNotes[lane][currentIndexes[lane]].HitTimeMS)
+                {
+                    currentIndexes[lane]++;
+                    NoteAutoMissed?.Invoke(lane);
+                }
             }
         }
     }
