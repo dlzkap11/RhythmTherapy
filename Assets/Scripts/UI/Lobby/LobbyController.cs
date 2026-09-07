@@ -1,12 +1,11 @@
-using System.Collections.Generic;
-
 using DG.Tweening;
+using RhythmTherapy.Core;
+using RhythmTherapy.Managers;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-
-using RhythmTherapy.Core;
 
 /// <summary>
 /// 로비 곡 캐러셀. 방향키(←/→)로 곡을 넘긴다(wrap-around). 원들이 호(원) 위를 도는 무한 로터리로,
@@ -155,7 +154,8 @@ public sealed class LobbyController : MonoBehaviour
 
     private void Move(int dir)
     {
-        _pending += dir;
+        // 연타로 입력이 누적돼 키를 떼도 계속 넘어가지 않도록 ±1로 제한 (슬라이드 중 1칸까지만 예약).
+        _pending = Mathf.Clamp(_pending + dir, -1, 1);
         if (!_sliding)
             StepSlide();
     }
@@ -287,11 +287,17 @@ public sealed class LobbyController : MonoBehaviour
         float k = Prominence(i);
         _circles[i].transform.localScale = _circleBaseScale[i] * Mathf.Lerp(0.65f, 1f, k);
 
+        // AlbumArt 가 있을 때만 스프라이트를 교체한다. 없으면 씬/인스펙터에 배치된 스프라이트를 그대로 둔다.
         if (setSprite)
-            _circles[i].sprite = song.AlbumArt != null ? song.AlbumArt : circleSprite;
+        {
+            if (song.AlbumArt != null)
+                _circles[i].sprite = song.AlbumArt;
+            else if (_circles[i].sprite == null)
+                _circles[i].sprite = circleSprite;
+        }
 
         float dim = Mathf.Lerp(0.35f, 1f, k);
-        _circles[i].color = song.AlbumArt != null ? new Color(dim, dim, dim, 1f) : CircleColor(song, dim);
+        _circles[i].color = new Color(dim, dim, dim, 1f);
     }
 
     private void OnDestroy()
@@ -334,7 +340,14 @@ public sealed class LobbyController : MonoBehaviour
         if (titleText != null)
             titleText.text = string.IsNullOrEmpty(current.SongName) ? "(제목 없음)" : current.SongName;
         if (highScoreText != null)
-            highScoreText.text = "HIGH SCORE : ---";
+        {
+            SongScoreRecord record = ScoreRecordManager.Instance != null
+                ? ScoreRecordManager.Instance.Get(current.SongID)
+                : null;
+            highScoreText.text = record != null
+                ? $"HIGH SCORE : {record.bestScore:N0}"
+                : "HIGH SCORE : ---";
+        }
 
         if (positionBar != null)
         {
@@ -348,24 +361,13 @@ public sealed class LobbyController : MonoBehaviour
         if (image == null)
             return;
 
+        // AlbumArt 가 있을 때만 스프라이트를 교체. 없으면 씬에 배치된 스프라이트 유지.
         if (song.AlbumArt != null)
-        {
             image.sprite = song.AlbumArt;
-            image.color = new Color(dim, dim, dim, 1f);
-        }
-        else
-        {
+        else if (image.sprite == null)
             image.sprite = circleSprite;
-            image.color = CircleColor(song, dim);
-        }
-    }
 
-    /// <summary>앨범 아트가 없을 때 원에 쓰는 색 (테마색 × dim, 알파 1).</summary>
-    private static Color CircleColor(SongDataConfig song, float dim)
-    {
-        Color c = song.ThemeColor * dim;
-        c.a = 1f;
-        return c;
+        image.color = new Color(dim, dim, dim, 1f);
     }
 
     private void PlayPreview()

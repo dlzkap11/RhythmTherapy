@@ -8,6 +8,7 @@ namespace RhythmTherapy.Core
     public struct GameResult
     {
         public string songName;
+        public int songID;
 
         public int score;
         public int maxCombo;
@@ -33,5 +34,8 @@ namespace RhythmTherapy.Core
 
         /// <summary>전체 노트를 Perfect 로만 처리.</summary>
         public bool allPerfect;
+
+        /// <summary>이번 판으로 해당 곡의 최고 점수가 갱신됐는지 (첫 기록 포함). ResultScene 신기록 연출용.</summary>
+        public bool isNewRecord;
     }
 }

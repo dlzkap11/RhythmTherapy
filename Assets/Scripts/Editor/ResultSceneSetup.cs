@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace RhythmTherapy.EditorTools
 {
     /// <summary>
-    /// ResultScene 에 ResultView 를 부착하고, GameScene/ResultScene(+LobyScene) 을
+    /// ResultScene 에 ResultView 를 부착하고, GameScene/ResultScene(+LobbyScene) 을
     /// Build Settings 에 등록한다. Unity 에디터 메뉴에서 1회 실행하면 됨
     /// (Pipeline/MCP 로도 실행 가능: RhythmTherapy.EditorTools.ResultSceneSetup.Setup()).
     ///
@@ -22,7 +22,7 @@ namespace RhythmTherapy.EditorTools
     {
         const string GameScenePath = "Assets/Scenes/GameScene.unity";
         const string ResultScenePath = "Assets/Scenes/ResultScene.unity";
-        const string LobyScenePath = "Assets/Scenes/LobyScene.unity";
+        const string LobbyScenePath = "Assets/Scenes/LobbyScene.unity";
 
         [MenuItem("RhythmTherapy/Setup/Wire Result Scene")]
         public static void Setup()
@@ -45,7 +45,7 @@ namespace RhythmTherapy.EditorTools
 
             AddIfMissing(scenes, GameScenePath);
             AddIfMissing(scenes, ResultScenePath);
-            AddIfMissing(scenes, LobyScenePath);
+            AddIfMissing(scenes, LobbyScenePath);
 
             EditorBuildSettings.scenes = scenes.ToArray();
         }

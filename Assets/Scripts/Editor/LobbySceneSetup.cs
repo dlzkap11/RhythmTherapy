@@ -11,12 +11,12 @@ using UnityEngine.UI;
 namespace RhythmTherapy.EditorTools
 {
     /// <summary>
-    /// LobyScene 에 LobbyController 를 배선하고, 캐러셀이 순회할 데모곡(SongDataConfig)이
+    /// LobbyScene 에 LobbyController 를 배선하고, 캐러셀이 순회할 데모곡(SongDataConfig)이
     /// 3개 미만이면 채워 넣는다. 에디터 메뉴 또는 MCP 로 1회 실행. 재실행 안전.
     /// </summary>
     public static class LobbySceneSetup
     {
-        const string LobyScenePath = "Assets/Scenes/LobyScene.unity";
+        const string LobbyScenePath = "Assets/Scenes/LobbyScene.unity";
         const string SongDir = "Assets/Resources/SongData";
         const string ClipPath = "Assets/Resources/SongData/oceanking-september.mp3";
 
@@ -27,12 +27,12 @@ namespace RhythmTherapy.EditorTools
 
             EnsureDemoSongs();
 
-            Scene scene = EditorSceneManager.OpenScene(LobyScenePath, OpenSceneMode.Single);
+            Scene scene = EditorSceneManager.OpenScene(LobbyScenePath, OpenSceneMode.Single);
             WireLobbyScene();
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
 
-            if (!string.IsNullOrEmpty(original) && original != LobyScenePath)
+            if (!string.IsNullOrEmpty(original) && original != LobbyScenePath)
                 EditorSceneManager.OpenScene(original, OpenSceneMode.Single);
 
             Debug.Log("[LobbySceneSetup] 완료 — LobbyController 배선 + 데모곡 확인");

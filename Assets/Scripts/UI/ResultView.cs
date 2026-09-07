@@ -24,6 +24,7 @@ public sealed class ResultView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI badText;
     [SerializeField] private TextMeshProUGUI missText;
     [SerializeField] private TextMeshProUGUI fcApText;
+    [SerializeField] private TextMeshProUGUI newRecordText;
     [SerializeField] private TextMeshProUGUI maxComboText;
     [SerializeField] private Image rankGaugeFill;
 
@@ -75,6 +76,7 @@ public sealed class ResultView : MonoBehaviour
         bannerGroup.alpha = 0f;
         if (rankGaugeFill != null) rankGaugeFill.fillAmount = 0f;
         if (fcApText != null) fcApText.transform.localScale = Vector3.one;
+        if (newRecordText != null) newRecordText.transform.localScale = Vector3.one;
 
         if (r.cleared)
             PlayClearSequence(r);
@@ -96,6 +98,7 @@ public sealed class ResultView : MonoBehaviour
         if (badText == null) badText = FindTextByName("Bad");
         if (missText == null) missText = FindTextByName("Miss");
         if (fcApText == null) fcApText = FindTextByName("FcAp");
+        if (newRecordText == null) newRecordText = FindTextByName("NewRecord");
         if (maxComboText == null) maxComboText = FindTextByName("MaxCombo");
         if (rankGaugeFill == null) rankGaugeFill = FindImageByName("GaugeFill");
 
@@ -137,6 +140,15 @@ public sealed class ResultView : MonoBehaviour
             fcApText.gameObject.SetActive(showFcAp);
             if (showFcAp)
                 fcApText.text = r.allPerfect ? "ALL PERFECT" : "FULL COMBO";
+        }
+
+        // 신기록은 완주한 판에서만 의미가 있다 (실패 시 결과값 자체를 숨김).
+        if (newRecordText != null)
+        {
+            bool showNewRecord = r.cleared && r.isNewRecord;
+            newRecordText.gameObject.SetActive(showNewRecord);
+            if (showNewRecord)
+                newRecordText.text = "NEW RECORD";
         }
     }
 
@@ -232,13 +244,18 @@ public sealed class ResultView : MonoBehaviour
             sequence.Append(fcApText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
         }
 
+        if (r.isNewRecord && newRecordText != null)
+        {
+            sequence.Append(newRecordText.transform.DOScale(1f, 0.3f).From(0f).SetEase(Ease.OutBack));
+        }
+
         AppendButtonRowReveal();
     }
 
     private void PlayFailSequence()
     {
         // 실패 시엔 결과값을 보여주지 않고 배너만 띄운 채 정지한다.
-        // TODO: 로비씬(LobyScene)이 생기면 여기서 일정 시간 후 로비로 이동시킨다.
+        // TODO: 여기서 일정 시간 후 LobbyScene 으로 자동 이동시킨다 (현재는 버튼으로만 이동).
         bannerText.text = "STAGE FAILED";
         bannerText.color = new Color(1f, 0.4f, 0.4f);
 
@@ -361,7 +378,7 @@ public sealed class ResultView : MonoBehaviour
 
     public void Retry() => SceneFader.Load("GameScene");
 
-    public void GoToLobby() => SceneFader.Load("LobyScene");
+    public void GoToLobby() => SceneFader.Load("LobbyScene");
 
     /// <summary>
     /// "/" 등 경로 구분자로 오인될 수 있는 이름도 안전하게 찾기 위해 GameObject.Find 대신
