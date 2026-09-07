@@ -1,8 +1,11 @@
 using RhythmTherapy.Core;
+using Unity.Profiling;
 using UnityEngine;
 
 public class Note : MonoBehaviour
 {
+    private static readonly ProfilerMarker s_updateMarker = new ProfilerMarker("Rhythm.Note.Update");
+
     [SerializeField] private NoteData data;
 
     // 노트데이터안에 있는 내용이라 굳이 없어도 될 듯 (인스펙터 확인용)
@@ -36,11 +39,14 @@ public class Note : MonoBehaviour
 
     private void Update()
     {
-        Conductor conductor = Conductor.Instance;
-        if (conductor == null)
-            return;
+        using (s_updateMarker.Auto())
+        {
+            Conductor conductor = Conductor.Instance;
+            if (conductor == null)
+                return;
 
-        float p = (float)NoteMath.Progress(conductor.SongTimeMs, hitTime, approachMs);
-        transform.position = Vector3.LerpUnclamped(spawnPos, targetPos, p);
+            float p = (float)NoteMath.Progress(conductor.SongTimeMs, hitTime, approachMs);
+            transform.position = Vector3.LerpUnclamped(spawnPos, targetPos, p);
+        }
     }
 }

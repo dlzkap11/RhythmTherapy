@@ -84,6 +84,8 @@ namespace RhythmTherapy.EditorTools
 
             LobbyController controller = chartUi.GetComponent<LobbyController>() ?? chartUi.AddComponent<LobbyController>();
 
+            Button quit = BuildQuitButton();
+
             AudioSource preview = FindPreviewSource(chartUi.transform);
             Image[] buffers = BuildBufferCircles(GetComponent<Image>("SelectSong"), GetComponent<Image>("LeftSong"));
 
@@ -96,6 +98,7 @@ namespace RhythmTherapy.EditorTools
             SetRef(so, "titleText", GetComponent<TextMeshProUGUI>("Title"));
             SetRef(so, "highScoreText", GetComponent<TextMeshProUGUI>("HighScore"));
             SetRef(so, "playButton", GetComponent<Button>("GameStartButton"));
+            SetRef(so, "quitButton", quit);
             SetRef(so, "positionBar", GetComponent<Scrollbar>("Scrollbar"));
             SetRef(so, "previewSource", preview);
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -206,6 +209,61 @@ namespace RhythmTherapy.EditorTools
                 label.characterSpacing = 10f;
                 label.alignment = TextAlignmentOptions.Center;
             }
+        }
+
+        static readonly Color QuitAccent = new Color(0.85f, 0.28f, 0.3f);   // 붉은 액센트
+
+        /// <summary>
+        /// GameStartButton 을 복제해 그 아래에 "QuitButton" 을 만든다. 라벨은 "게임 종료",
+        /// 색은 붉은 액센트. onClick 은 LobbyController.quitButton 배선으로 코드에서 연결된다. 재실행 안전.
+        /// </summary>
+        static Button BuildQuitButton()
+        {
+            GameObject start = Find("GameStartButton");
+            if (start == null)
+                return null;
+
+            GameObject go = Find("QuitButton");
+            if (go == null)
+            {
+                go = Object.Instantiate(start, start.transform.parent);
+                go.name = "QuitButton";
+            }
+
+            RectTransform startRt = start.GetComponent<RectTransform>();
+            RectTransform rt = go.GetComponent<RectTransform>();
+            rt.localScale = startRt.localScale;
+            rt.sizeDelta = startRt.sizeDelta;
+            rt.anchorMin = startRt.anchorMin;
+            rt.anchorMax = startRt.anchorMax;
+            rt.pivot = startRt.pivot;
+            rt.anchoredPosition = startRt.anchoredPosition - new Vector2(0f, startRt.sizeDelta.y + 14f);
+
+            Button btn = go.GetComponent<Button>();
+            if (btn != null)
+            {
+                btn.onClick = new Button.ButtonClickedEvent();
+                ColorBlock cb = btn.colors;
+                cb.normalColor = QuitAccent;
+                cb.highlightedColor = Color.Lerp(QuitAccent, Color.white, 0.25f);
+                cb.pressedColor = QuitAccent * 0.8f;
+                cb.selectedColor = QuitAccent;
+                btn.colors = cb;
+            }
+
+            TextMeshProUGUI label = go.GetComponentInChildren<TextMeshProUGUI>();
+            if (label != null)
+            {
+                // "ButtonText" 이름을 GameStartButton 쪽에만 남겨 StylePlayButton 의 Find 가 헷갈리지 않게 한다.
+                label.gameObject.name = "QuitButtonText";
+                label.text = "게임 종료";
+                label.enableAutoSizing = false;
+                label.fontSize = 26f;
+                label.characterSpacing = 4f;
+                label.alignment = TextAlignmentOptions.Center;
+            }
+
+            return btn;
         }
 
         static void WidenBox(RectTransform rt, float minWidth)

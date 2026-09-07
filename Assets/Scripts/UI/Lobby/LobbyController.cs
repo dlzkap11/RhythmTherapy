@@ -28,6 +28,7 @@ public sealed class LobbyController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI highScoreText;
     [SerializeField] private Button playButton;
+    [SerializeField] private Button quitButton;
     [SerializeField] private Scrollbar positionBar;
 
     [Header("미리듣기")]
@@ -68,6 +69,9 @@ public sealed class LobbyController : MonoBehaviour
 
         if (playButton != null)
             playButton.onClick.AddListener(StartGame);
+
+        if (quitButton != null)
+            quitButton.onClick.AddListener(QuitGame);
 
         if (positionBar != null)
         {
@@ -415,5 +419,20 @@ public sealed class LobbyController : MonoBehaviour
         SongSelection.Selected = _songs[_index];
         SongSelection.LastIndex = _index;
         SceneFader.Load("GameScene");
+    }
+
+    /// <summary>게임 종료. 에디터에서는 플레이 모드를 정지한다.</summary>
+    private void QuitGame()
+    {
+        _slideSeq?.Kill();
+        _previewFade?.Kill();
+        if (previewSource != null)
+            previewSource.Stop();
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }
