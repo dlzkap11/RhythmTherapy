@@ -24,6 +24,9 @@ public sealed class LobbyController : MonoBehaviour
     [SerializeField] private Image[] bufferImages;      // {BufferL2, BufferL1, BufferR1, BufferR2}
     [SerializeField] private Sprite circleSprite;
 
+    [Tooltip("앨범아트를 원형으로 잘라내는 머티리얼 (Assets/Art/Materials/UICircleClip.mat)")]
+    [SerializeField] private Material circleMaterial;
+
     [Header("정보")]
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI highScoreText;
@@ -51,7 +54,10 @@ public sealed class LobbyController : MonoBehaviour
     private Image[] _circles;
     private float[] _ang;
     private int[] _circleSong;
-    private Vector3[] _circleBaseScale;
+    private Vector3 _circleBaseScale;
+    private Material[] _circleMats;
+
+    private static readonly int SpriteAspectId = Shader.PropertyToID("_SpriteAspect");
     private Vector2 _ringCenter;
     private float _ringRadius;
     private float _frontAngle;
@@ -150,12 +156,43 @@ public sealed class LobbyController : MonoBehaviour
         };
         _ang = new float[CircleCount];
         _circleSong = new int[CircleCount];
-        _circleBaseScale = new Vector3[CircleCount];
+        _circleMats = new Material[CircleCount];
+
+        // 기준 스케일을 앞(center) 원 하나로 통일해야, 버퍼 원이 앞으로 돌아왔을 때도 크기가 같다.
+        // 원근 축소는 RenderCircle 의 Prominence 가 전담한다.
+        _circleBaseScale = SquareBaseScale(centerImage.rectTransform);
+
         for (int i = 0; i < CircleCount; i++)
         {
             _ang[i] = _frontAngle + SlotOffset[i] * _stepAngle;
-            _circleBaseScale[i] = _circles[i].transform.localScale;
+
+            // 곡마다 원본 비율이 달라 _SpriteAspect 를 원별로 줘야 하므로 인스턴스로 복제한다.
+            if (circleMaterial != null)
+            {
+                _circleMats[i] = new Material(circleMaterial);
+                _circles[i].material = _circleMats[i];
+            }
         }
+    }
+
+    /// <summary>
+    /// 원이 화면에서 정원으로 보이도록, 월드 기준 가로=세로가 되는 localScale 을 구한다.
+    /// 캐러셀 패널이 세로로 눌려 있으므로(Panel localScale.y &lt; 1) 로컬 스케일만 정사각으로
+    /// 맞추면 화면에서는 타원이 된다. 부모의 lossyScale 과 sizeDelta 까지 반영해 보정한다.
+    /// </summary>
+    private static Vector3 SquareBaseScale(RectTransform rt)
+    {
+        float x = rt.localScale.x;
+
+        Vector2 size = rt.sizeDelta;
+        Vector3 parentScale = rt.parent != null ? rt.parent.lossyScale : Vector3.one;
+
+        float worldPerLocalX = size.x * parentScale.x;
+        float worldPerLocalY = size.y * parentScale.y;
+        if (Mathf.Approximately(worldPerLocalY, 0f))
+            return new Vector3(x, x, 1f);
+
+        return new Vector3(x, x * worldPerLocalX / worldPerLocalY, 1f);
     }
 
     /// <summary>3 슬롯 좌표에서 외접원(중심/반지름/앞각/스텝각)을 구한다. 일직선이면 _ringValid=false.</summary>
@@ -322,8 +359,8 @@ public sealed class LobbyController : MonoBehaviour
         int f = FrontCircle();
         Transform tr = _circles[f].transform;
         tr.DOKill(true);
-        tr.localScale = _circleBaseScale[f];
-        tr.DOPunchScale(_circleBaseScale[f] * 0.1f, 0.22f, 6, 0.6f);
+        tr.localScale = _circleBaseScale;
+        tr.DOPunchScale(_circleBaseScale * 0.1f, 0.22f, 6, 0.6f);
     }
 
     /// <summary>앞에 가까운 원일수록 뒤 sibling(위에 그려짐)로 정렬.</summary>
@@ -361,23 +398,37 @@ public sealed class LobbyController : MonoBehaviour
             _ringCenter + _ringRadius * new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
 
         float k = Prominence(i);
-        _circles[i].transform.localScale = _circleBaseScale[i] * Mathf.Lerp(0.65f, 1f, k);
+        _circles[i].transform.localScale = _circleBaseScale * Mathf.Lerp(0.65f, 1f, k);
 
-        // AlbumArt 가 있을 때만 스프라이트를 교체한다. 없으면 씬/인스펙터에 배치된 스프라이트를 그대로 둔다.
         if (setSprite)
-        {
-            if (song.AlbumArt != null)
-                _circles[i].sprite = song.AlbumArt;
-            else if (_circles[i].sprite == null)
-                _circles[i].sprite = circleSprite;
-        }
+            ApplyArt(_circles[i], _circleMats[i], song);
 
         // 곡 수가 적으면 먼 슬롯이 같은 곡을 중복 표시하므로, _maxVisibleOffset 을 넘는 원은 사라진다.
         float offsetAbs = Mathf.Abs(Mathf.DeltaAngle(_ang[i], _frontAngle)) / Mathf.Abs(_stepAngle);
         float alpha = Mathf.Clamp01(_maxVisibleOffset + 1f - offsetAbs);
 
         float dim = Mathf.Lerp(0.35f, 1f, k);
-        _circles[i].color = new Color(dim, dim, dim, alpha);
+        Color tint = ArtTint(song);
+        _circles[i].color = new Color(tint.r * dim, tint.g * dim, tint.b * dim, alpha);
+    }
+
+    /// <summary>
+    /// 곡의 앨범아트를 원에 적용하고, 원형 셰이더에 원본 가로/세로 비율을 넘긴다.
+    /// 비율을 넘겨야 정사각이 아닌 아트가 늘어나지 않고 중앙 크롭된다.
+    /// </summary>
+    private void ApplyArt(Image image, Material mat, SongDataConfig song)
+    {
+        Sprite art = song.AlbumArt != null ? song.AlbumArt : circleSprite;
+        image.sprite = art;
+
+        if (mat != null && art != null && art.rect.height > 0f)
+            mat.SetFloat(SpriteAspectId, art.rect.width / art.rect.height);
+    }
+
+    /// <summary>앨범아트가 있으면 원색 그대로, 없으면 곡의 ThemeColor 로 칠해 곡을 구분한다.</summary>
+    private static Color ArtTint(SongDataConfig song)
+    {
+        return song.AlbumArt != null ? Color.white : song.ThemeColor;
     }
 
     private void OnDestroy()
@@ -391,6 +442,13 @@ public sealed class LobbyController : MonoBehaviour
         {
             foreach (Image c in _circles)
                 if (c != null) c.transform.DOKill();
+        }
+
+        // BuildRing 에서 복제한 머티리얼 인스턴스 정리 (누수 방지).
+        if (_circleMats != null)
+        {
+            foreach (Material m in _circleMats)
+                if (m != null) Destroy(m);
         }
     }
 
@@ -456,13 +514,11 @@ public sealed class LobbyController : MonoBehaviour
         if (image == null)
             return;
 
-        // AlbumArt 가 있을 때만 스프라이트를 교체. 없으면 씬에 배치된 스프라이트 유지.
-        if (song.AlbumArt != null)
-            image.sprite = song.AlbumArt;
-        else if (image.sprite == null)
-            image.sprite = circleSprite;
+        // 링이 무효일 때만 도는 폴백 경로. 머티리얼 인스턴스가 없으므로 비율은 넘기지 않는다.
+        ApplyArt(image, null, song);
 
-        image.color = new Color(dim, dim, dim, 1f);
+        Color tint = ArtTint(song);
+        image.color = new Color(tint.r * dim, tint.g * dim, tint.b * dim, 1f);
     }
 
     private void PlayPreview()
