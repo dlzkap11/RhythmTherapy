@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SongDataConfig
   SongID: 0
   SongName: Ocean King - September
-  AlbumArt: {fileID: 0}
+  AlbumArt: {fileID: -641405548389218093, guid: fc9ddc8fe8de48147bf61cde1a775608, type: 3}
   ThemeColor: {r: 0.25, g: 0.7, b: 1, a: 1}
   SongAudioClip: {fileID: 8300000, guid: d4daa4735e656154694388d278f835d7, type: 3}
   SongVolume: 0.3

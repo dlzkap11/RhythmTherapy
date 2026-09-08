@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SongDataConfig
   SongID: 1
   SongName: Cyphers - Theme of Clive
-  AlbumArt: {fileID: 0}
+  AlbumArt: {fileID: 4505306697486533353, guid: 9e9b359efe5f6b348848c75857e9d769, type: 3}
   ThemeColor: {r: 1, g: 0.85, b: 0.2, a: 1}
   SongAudioClip: {fileID: 8300000, guid: f5179fdb9d1bfd94c91ca6f5e2ef3176, type: 3}
   SongVolume: 0.1
