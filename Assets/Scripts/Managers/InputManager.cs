@@ -29,6 +29,7 @@ public class InputManager : MonoBehaviour
         playerInput.actions["Lane1"].canceled += OnLane1;
         playerInput.actions["Lane2"].performed += OnLane2;
         playerInput.actions["Lane2"].canceled += OnLane2;
+        playerInput.actions["Pause"].performed += OnPause;
 
     }
 
@@ -39,6 +40,8 @@ public class InputManager : MonoBehaviour
         playerInput.actions["Lane1"].canceled -= OnLane1;
         playerInput.actions["Lane2"].performed -= OnLane2;
         playerInput.actions["Lane2"].canceled -= OnLane2;
+        playerInput.actions["Pause"].performed -= OnPause;
+
     }
 
 
@@ -84,16 +87,30 @@ public class InputManager : MonoBehaviour
     }
 
 
-    void OnPause(InputValue value)
+    void OnPause(InputAction.CallbackContext context)
     {
-        Debug.Log("Pause!");
+        if (context.performed)
+        {
+            if (Conductor.Instance != null)
+            {
+                if (Conductor.Instance.IsPaused)
+                {
+                    Conductor.Instance.Resume();
+                }
+                else
+                {
+                    Conductor.Instance.Pause();
+                }
+            }
+        }
     }
-    
 
     // 판정
     private void Pop(int lane)
     {
         //inputTime = ns.playTime;
+        if (Conductor.Instance != null && Conductor.Instance.IsPaused)
+            return;
         inputTimeMs = (int)(ns.playTime * 1000f);
         LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
     }
