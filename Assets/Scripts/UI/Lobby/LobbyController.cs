@@ -33,7 +33,6 @@ public sealed class LobbyController : MonoBehaviour
 
     [Header("미리듣기")]
     [SerializeField] private AudioSource previewSource;
-    [SerializeField] private float previewVolume = 0.5f;
 
     private readonly List<SongDataConfig> _songs = new List<SongDataConfig>();
     private int _index;
@@ -471,7 +470,8 @@ public sealed class LobbyController : MonoBehaviour
         if (previewSource == null)
             return;
 
-        AudioClip clip = _songs[_index].SongAudioClip;
+        SongDataConfig song = _songs[_index];
+        AudioClip clip = song.SongAudioClip;
         _previewFade?.Kill();
 
         if (clip == null)
@@ -495,7 +495,8 @@ public sealed class LobbyController : MonoBehaviour
             previewSource.Play();
         });
 
-        _previewFade.Append(previewSource.DOFade(previewVolume, GameConfig.LobbyPreviewFadeSeconds));
+        float targetVolume = Mathf.Clamp01(song.SongVolume);
+        _previewFade.Append(previewSource.DOFade(targetVolume, GameConfig.LobbyPreviewFadeSeconds));
     }
 
     private void StartGame()

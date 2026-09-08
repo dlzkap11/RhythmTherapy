@@ -14,6 +14,10 @@ public class SongDataConfig : ScriptableObject
     public Color ThemeColor = Color.white;
     public AudioClip SongAudioClip;
 
+    [Range(0f, 1f)]
+    [Tooltip("곡별 재생 볼륨 배율. 곡마다 마스터링 라우드니스가 달라 보정용. 1 = 원음.")]
+    public float SongVolume = 1f;
+
 
     // 해당 노래의 노트 배치 데이터
     [Header("Note")]

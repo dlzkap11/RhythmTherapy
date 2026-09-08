@@ -18,8 +18,10 @@ public class LaneManager : MonoBehaviour
     [SerializeField] private List<NoteData>[] laneNotes;
     [SerializeField] private int[] currentIndexes;
 
-    // 임시 판정 범위(ms). 판정 등급이 정해지면 설정값으로 분리 예정.
-    private const int JUDGE_RANGE_MS = 200;
+    // 판정 게이트(ms). 이 범위 밖 입력은 노트를 소비하지 않고 무시된다(헛침).
+    // JudgeSystem.BadMS 와 반드시 같은 값이어야 한다. 게이트가 더 넓으면
+    // 판정창 안 입력이 JudgeType.Miss 로 떨어져 노트를 파괴하고 HP까지 깎는다.
+    private const int JUDGE_RANGE_MS = 150;
 
     // 노트 1개가 소비될 때 발생 (int = 레인). 시각 노트 해제에 사용.
     public event Action<int, int> NoteJudged;      // 키 입력으로 판정됨
@@ -89,8 +91,9 @@ public class LaneManager : MonoBehaviour
             {
                 NoteData note = laneNotes[lane][currentIndexes[lane]];
 
-                Debug.Log($"입력시간 :{currentInputTimeMs}, 판정시간 : {note.HitTimeMS}");
-                // 이미 지나간 노트는 자동 소멸 처리하며 스킵
+                // 이미 지나간 노트는 자동 소멸 처리하며 스킵.
+                // (입력 콜백은 Update 보다 먼저 발화하므로 그 프레임의 CollectAutoMisses 가
+                //  아직 돌지 않은 노트를 여기서 받아낸다.)
                 if (note.HitTimeMS < currentInputTimeMs - JUDGE_RANGE_MS)
                 {
                     currentIndexes[lane]++;
@@ -107,10 +110,12 @@ public class LaneManager : MonoBehaviour
                     break;
                 }
 
-                // 범위 안 노트를 찾으면 소비하고 반환
+                // 범위 안 노트를 찾으면 1개만 소비하고 즉시 종료한다.
+                // 이 return 이 없으면 키 1회 입력이 판정창 안의 노트를 전부 연속 소비한다.
                 currentIndexes[lane]++;
                 NoteJudged?.Invoke(error, lane);
                 NoteJudgedLane?.Invoke(lane);
+                return;
             }
         }
     }

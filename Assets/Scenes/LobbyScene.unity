@@ -2158,7 +2158,7 @@ MonoBehaviour:
   quitButton: {fileID: 1304434904}
   positionBar: {fileID: 1626721870}
   previewSource: {fileID: 585486299}
-  previewVolume: 0.5
+  previewVolume: 0.1
 --- !u!1 &2014349332
 GameObject:
   m_ObjectHideFlags: 0
