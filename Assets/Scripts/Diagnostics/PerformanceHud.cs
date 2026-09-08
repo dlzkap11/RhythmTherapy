@@ -24,10 +24,13 @@ namespace RhythmTherapy.Diagnostics
         private const int SampleCount = 300;              // 통계 창(최근 N 프레임)
         private const float StatsIntervalSeconds = 0.25f; // 통계 재계산 주기
         private const float LogIntervalSeconds = 2f;
-        private const float PerfTestQuitSeconds = 45f;
+        private const float PerfTestQuitSeconds = 75f;
         private const int GraphWidth = 160;               // 프레임타임 그래프 폭(px = 표본 수)
 
         private static bool _perfTestMode;
+
+        /// <summary>-perftest 로 실행 중인지. GameManager 가 HP 즉사(입력 없음)를 막는 데 참조.</summary>
+        public static bool PerfTestActive => _perfTestMode;
 
         private readonly float[] _frameMs = new float[SampleCount];
         private int _cursor;
@@ -53,10 +56,26 @@ namespace RhythmTherapy.Diagnostics
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
-            foreach (string arg in Environment.GetCommandLineArgs())
+            string[] args = Environment.GetCommandLineArgs();
+            for (int i = 0; i < args.Length; i++)
             {
-                if (string.Equals(arg, "-perftest", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(args[i], "-perftest", StringComparison.OrdinalIgnoreCase))
                     _perfTestMode = true;
+
+                // -song Song_BeltConveyor : GameScene 자동 로드 전에 그 곡을 선택곡으로 지정.
+                if (string.Equals(args[i], "-song", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Length)
+                {
+                    SongDataConfig cfg = Resources.Load<SongDataConfig>("SongData/" + args[i + 1]);
+                    if (cfg != null)
+                    {
+                        SongSelection.Selected = cfg;
+                        Debug.Log($"[Perf] -song {cfg.SongName} (notes {cfg.NoteDatas.Count})");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Perf] -song: Resources/SongData/{args[i + 1]} 없음");
+                    }
+                }
             }
 
             GameObject go = new GameObject("@Diagnostics");

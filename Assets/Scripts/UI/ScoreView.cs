@@ -21,7 +21,7 @@ public class ScoreView : MonoBehaviour
     private void OnScoreChanged(int current, int cnt)
     {
         Updated(current);
-        AvgScore((float)current/ cnt);
+        AvgScore(cnt > 0 ? (float)current / cnt : 0f);
     }
 
 

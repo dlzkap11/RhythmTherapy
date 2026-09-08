@@ -84,6 +84,13 @@ public class Conductor : MonoBehaviour
             PlayConfigured();
     }
 
+    /// <summary>재생 시작 전 곡 지정. 로비를 안 거치고 GameScene 을 직접 실행하는 테스트에서 NoteSpawn 이 호출.</summary>
+    public void SetSong(SongDataConfig config)
+    {
+        if (!IsPlaying && config != null)
+            songDataConfig = config;
+    }
+
     /// <summary>인스펙터에 지정된 songDataConfig 클립으로 재생 시작. NoteSpawn 이 노트 삽입 후 호출.</summary>
     public void PlayConfigured()
     {

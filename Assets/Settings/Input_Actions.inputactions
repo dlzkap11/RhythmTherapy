@@ -73,6 +73,17 @@
                 },
                 {
                     "name": "",
+                    "id": "bb0e5702-7803-451c-aac7-a0cd39c0ea01",
+                    "path": "<Keyboard>/p",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Lane1",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "c26a4734-44c2-41ba-9b19-79d15dc9bc3b",
                     "path": "<Keyboard>/semicolon",
                     "interactions": "",
@@ -86,6 +97,17 @@
                     "name": "",
                     "id": "7e7cc192-c9c2-48b0-b987-73b9adfb8e2d",
                     "path": "<Keyboard>/quote",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Lane2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "33d5be8d-2a33-4490-8ec7-b81ebba385d3",
+                    "path": "<Keyboard>/w",
                     "interactions": "",
                     "processors": "",
                     "groups": "",

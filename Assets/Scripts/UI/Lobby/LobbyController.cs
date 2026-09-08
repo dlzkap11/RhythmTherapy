@@ -37,8 +37,11 @@ public sealed class LobbyController : MonoBehaviour
 
     private readonly List<SongDataConfig> _songs = new List<SongDataConfig>();
     private int _index;
-    private int _pending;
+    private int _virtualIndex;          // 언랩(누적) 인덱스. _index = Mod(_virtualIndex, n)
+    private int _targetVirtual;
+    private int _maxVisibleOffset;      // 중복 없이 보여줄 수 있는 최대 슬롯 오프셋
     private bool _sliding;
+    private bool _suppressBarCallback;
     private Sequence _slideSeq;
     private Sequence _previewFade;
 
@@ -65,7 +68,11 @@ public sealed class LobbyController : MonoBehaviour
         if (leftImage != null) _leftPos = leftImage.rectTransform.anchoredPosition;
         if (rightImage != null) _rightPos = rightImage.rectTransform.anchoredPosition;
 
+        // 중복 없이 보여줄 수 있는 최대 슬롯 오프셋. 곡 3개 → 1(원 3개), 5개 → 2(원 5개), 7개 이상 → 3(원 7개).
+        _maxVisibleOffset = Mathf.Min(CircleCount / 2, Mathf.Max(0, (_songs.Count - 1) / 2));
+
         BuildRing();
+        EnsureSwipeHandler();
 
         if (playButton != null)
             playButton.onClick.AddListener(StartGame);
@@ -75,8 +82,10 @@ public sealed class LobbyController : MonoBehaviour
 
         if (positionBar != null)
         {
-            positionBar.interactable = false;
             positionBar.transform.SetAsLastSibling();
+            positionBar.interactable = _songs.Count > 1;
+            positionBar.numberOfSteps = Mathf.Max(0, _songs.Count);
+            positionBar.onValueChanged.AddListener(OnPositionBar);
         }
 
         if (_songs.Count == 0)
@@ -85,9 +94,42 @@ public sealed class LobbyController : MonoBehaviour
             return;
         }
 
-        _index = Mathf.Clamp(SongSelection.LastIndex, 0, _songs.Count - 1);
+        // 로비는 항상 첫 곡에서 시작한다(스크롤바 핸들 왼쪽 끝). 이전 선택 위치는 복원하지 않는다.
+        _index = 0;
+        _virtualIndex = _index;
+        _targetVirtual = _virtualIndex;
         ApplySelection();
         PlayPreview();
+    }
+
+    /// <summary>
+    /// 캐러셀 패널에 마우스 스와이프 핸들러를 보장한다. 씬 배선(에디터 메뉴)에 의존하지 않도록
+    /// 이미 배선된 centerImage 의 부모를 그대로 쓴다.
+    /// </summary>
+    private void EnsureSwipeHandler()
+    {
+        if (centerImage == null || centerImage.transform.parent == null)
+            return;
+
+        GameObject panel = centerImage.transform.parent.gameObject;
+
+        LobbyCarouselSwipe swipe = panel.GetComponent<LobbyCarouselSwipe>();
+        if (swipe == null)
+            swipe = panel.AddComponent<LobbyCarouselSwipe>();
+        swipe.Bind(this);
+
+        Image surface = panel.GetComponent<Image>();
+        if (surface != null)
+        {
+            surface.raycastTarget = true;
+            // (left, bottom, right, top) — 하단 정보/버튼 패널은 스와이프 히트에서 제외해 버튼 클릭을 살린다.
+            surface.raycastPadding = new Vector4(0f, GameConfig.LobbySwipeBottomExclusionPx, 0f, 0f);
+        }
+    }
+
+    private static int Mod(int a, int m)
+    {
+        return ((a % m) + m) % m;
     }
 
     private void BuildRing()
@@ -151,31 +193,62 @@ public sealed class LobbyController : MonoBehaviour
             return;
 
         if (Keyboard.current.leftArrowKey.wasPressedThisFrame)
-            Move(-1);
+            Step(-1);
         else if (Keyboard.current.rightArrowKey.wasPressedThisFrame)
-            Move(1);
+            Step(1);
     }
 
-    private void Move(int dir)
+    /// <summary>
+    /// 방향키·스와이프용. 누른 방향으로만 진행하도록 목표를 가상 인덱스 공간에서 ±1 예약한다.
+    /// (절대 인덱스 + wrap 최단경로로 계산하면 곡 수가 적을 때 한 바퀴 돌아 방향이 뒤집힌다.)
+    /// </summary>
+    private void Step(int dir)
     {
-        // 연타로 입력이 누적돼 키를 떼도 계속 넘어가지 않도록 ±1로 제한 (슬라이드 중 1칸까지만 예약).
-        _pending = Mathf.Clamp(_pending + dir, -1, 1);
+        if (_songs.Count < 2)
+            return;
+
+        _targetVirtual = Mathf.Clamp(_targetVirtual + dir, _virtualIndex - 1, _virtualIndex + 1);
         if (!_sliding)
             StepSlide();
     }
 
+    /// <summary>스크롤바용. 요청 시점에 wrap 최단 경로를 부호 있는 델타로 확정한다.</summary>
+    private void GoToIndex(int target)
+    {
+        int n = _songs.Count;
+        if (n < 2)
+            return;
+
+        target = Mathf.Clamp(target, 0, n - 1);
+        int forward = Mod(target - Mod(_virtualIndex, n), n);
+        int delta = forward * 2 <= n ? forward : forward - n;
+
+        _targetVirtual = _virtualIndex + delta;
+        if (!_sliding)
+            StepSlide();
+    }
+
+    /// <summary>마우스 스와이프에서 호출. 한 칸 이동.</summary>
+    public void SwipeStep(int dir)
+    {
+        Step(dir);
+    }
+
     private void StepSlide()
     {
-        if (_pending == 0)
+        int n = _songs.Count;
+        if (_virtualIndex == _targetVirtual)
         {
+            // 값이 무한정 커지지 않게 정착 시 정규화.
+            _virtualIndex = _index;
+            _targetVirtual = _virtualIndex;
             PlayPreview();
             return;
         }
 
-        int n = _songs.Count;
-        int d = _pending > 0 ? 1 : -1;
-        _pending -= d;
-        _index = (_index + d + n) % n;
+        int d = _targetVirtual > _virtualIndex ? 1 : -1;
+        _virtualIndex += d;
+        _index = Mod(_virtualIndex, n);
 
         if (!_ringValid || _circles == null || n < 2)
         {
@@ -300,12 +373,19 @@ public sealed class LobbyController : MonoBehaviour
                 _circles[i].sprite = circleSprite;
         }
 
+        // 곡 수가 적으면 먼 슬롯이 같은 곡을 중복 표시하므로, _maxVisibleOffset 을 넘는 원은 사라진다.
+        float offsetAbs = Mathf.Abs(Mathf.DeltaAngle(_ang[i], _frontAngle)) / Mathf.Abs(_stepAngle);
+        float alpha = Mathf.Clamp01(_maxVisibleOffset + 1f - offsetAbs);
+
         float dim = Mathf.Lerp(0.35f, 1f, k);
-        _circles[i].color = new Color(dim, dim, dim, 1f);
+        _circles[i].color = new Color(dim, dim, dim, alpha);
     }
 
     private void OnDestroy()
     {
+        if (positionBar != null)
+            positionBar.onValueChanged.RemoveListener(OnPositionBar);
+
         _slideSeq?.Kill();
         _previewFade?.Kill();
         if (_circles != null)
@@ -355,9 +435,21 @@ public sealed class LobbyController : MonoBehaviour
 
         if (positionBar != null)
         {
+            // 프로그램적 갱신이 OnPositionBar 로 되먹임되지 않도록 차단.
+            _suppressBarCallback = true;
             positionBar.size = 1f / n;
             positionBar.value = n > 1 ? _index / (float)(n - 1) : 0f;
+            _suppressBarCallback = false;
         }
+    }
+
+    /// <summary>스크롤바 조작 → 해당 위치의 곡으로 이동.</summary>
+    private void OnPositionBar(float value)
+    {
+        if (_suppressBarCallback || _songs.Count < 2)
+            return;
+
+        GoToIndex(Mathf.RoundToInt(value * (_songs.Count - 1)));
     }
 
     private void ApplyCircle(Image image, SongDataConfig song, float dim)
