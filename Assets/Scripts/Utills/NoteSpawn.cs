@@ -156,8 +156,15 @@ public class NoteSpawn : MonoBehaviour
     {
         if (notePool.Count == 0)
         {
-            Debug.LogWarning("[NoteSpawn] pool empty");
-            return;
+            // 여기서 스킵하면 activeByLane 이 LaneManager 의 데이터 소비와 영구히 어긋난다
+            // (시각 노트가 1칸씩 밀려 이후 전부 엉뚱한 오브젝트를 반납).
+            // MaxPoolSize 상한을 넘겨서라도 즉석 생성해 데이터↔시각 1:1 대응을 지킨다.
+            Debug.LogWarning($"[NoteSpawn] pool empty — 즉석 생성 (created={poolCreated})");
+
+            GameObject extra = Instantiate(notePrefabs, transform);
+            extra.SetActive(false);
+            notePool.Enqueue(extra);
+            poolCreated++;
         }
 
         int lane = Mathf.Clamp(data.lane, 0, laneNotes.Length - 1);

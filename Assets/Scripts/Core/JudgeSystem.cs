@@ -19,7 +19,9 @@ namespace RhythmTherapy.Core
         private int PerfectMS = 25;
         private int GreatMS = 50;
         private int GoodMS = 80;
-        private int BadMS = 120;
+        // LaneManager.JUDGE_RANGE_MS 와 반드시 같은 값. 게이트가 BadMS 보다 넓으면
+        // 판정창 안 입력이 Miss 로 떨어져 노트를 파괴하고 HP까지 깎는다.
+        private int BadMS = 150;
 
         /// <summary> 정확도 판정. 반환값 = 판정 후 정확도 타입 /// </summary>
         public JudgeType AccAss(int error)
