@@ -17,6 +17,7 @@ MonoBehaviour:
   AlbumArt: {fileID: 0}
   ThemeColor: {r: 0.7, g: 0.35, b: 0.95, a: 1}
   SongAudioClip: {fileID: 8300000, guid: 55691b9d8f33e6d49b30324e79908dc1, type: 3}
+  SongVolume: 0.2
   NoteDatas:
   - type: 0
     lane: 0

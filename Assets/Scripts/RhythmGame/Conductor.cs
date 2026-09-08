@@ -98,7 +98,7 @@ public class Conductor : MonoBehaviour
             return;
 
         if (songDataConfig != null && songDataConfig.SongAudioClip != null)
-            Play(songDataConfig.SongAudioClip, startOffsetMs);
+            Play(songDataConfig.SongAudioClip, startOffsetMs, songDataConfig.SongVolume);
     }
 
     private void OnDestroy()
@@ -107,9 +107,10 @@ public class Conductor : MonoBehaviour
             Instance = null;
     }
 
-    public void Play(AudioClip clip, double offsetMs)
+    public void Play(AudioClip clip, double offsetMs, float volume)
     {
         audioSource.clip = clip;
+        audioSource.volume = Mathf.Clamp01(volume);
         dspStartTime = AudioSettings.dspTime + ScheduleLeadSeconds;
         audioSource.PlayScheduled(dspStartTime);
 
