@@ -20,11 +20,20 @@ public class Conductor : MonoBehaviour
     private const double ScheduleLeadSeconds = 0.1;
 
     /// <summary>곡 시작 기준 현재 재생 시간(ms), 오프셋 보정 포함. 재생 전/예약시각 이전이면 음수/0.</summary>
-    public double SongTimeMs =>
-        IsPlaying ? (AudioSettings.dspTime - dspStartTime) * 1000.0 - startOffsetMs : 0.0;
+    public double SongTimeMs
+    {
+        get
+        {
+            if (!IsPlaying) return 0.0;
+            double now = IsPaused ? _pausedAtDspTime : AudioSettings.dspTime;
+            return (now - dspStartTime) * 1000.0 - startOffsetMs;
+        }
+    }
 
     /// <summary>초 단위 재생 시간 (기존 코드 호환).</summary>
     public double SongTime => SongTimeMs / 1000.0;
+
+    
 
     /// <summary>
     /// 설정된 클립 길이(ms). 클립이 없으면 0. 곡 종료 시각 산출에 사용.
@@ -44,8 +53,10 @@ public class Conductor : MonoBehaviour
     }
 
     public bool IsPlaying { get; private set; }
+    public bool IsPaused { get; private set; }
 
     private double dspStartTime;
+    private double _pausedAtDspTime;
 
     private void Awake()
     {
@@ -97,6 +108,26 @@ public class Conductor : MonoBehaviour
 
         startOffsetMs = offsetMs;
         IsPlaying = true;
+    }
+
+    public void Pause()
+    {
+        if(IsPlaying && !IsPaused && SongTimeMs > 0)
+        {
+            audioSource.Pause();
+            _pausedAtDspTime = AudioSettings.dspTime;
+            IsPaused = true;
+        }
+    }
+
+    public void Resume()
+    {
+        if(IsPlaying && IsPaused)
+        {
+            dspStartTime += AudioSettings.dspTime - _pausedAtDspTime;
+            audioSource.UnPause();
+            IsPaused = false;
+        }
     }
 
     public void Stop()

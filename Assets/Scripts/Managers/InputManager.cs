@@ -12,7 +12,6 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private NoteSpawn ns;
     [SerializeField] private int inputTimeMs;
-    private double inputTime;
 
     [Header("Player")]
     [SerializeField] private GameObject player;
@@ -29,6 +28,7 @@ public class InputManager : MonoBehaviour
         playerInput.actions["Lane1"].canceled += OnLane1;
         playerInput.actions["Lane2"].performed += OnLane2;
         playerInput.actions["Lane2"].canceled += OnLane2;
+        playerInput.actions["Pause"].performed += OnPause;
 
     }
 
@@ -39,6 +39,8 @@ public class InputManager : MonoBehaviour
         playerInput.actions["Lane1"].canceled -= OnLane1;
         playerInput.actions["Lane2"].performed -= OnLane2;
         playerInput.actions["Lane2"].canceled -= OnLane2;
+        playerInput.actions["Pause"].performed -= OnPause;
+
     }
 
 
@@ -84,17 +86,33 @@ public class InputManager : MonoBehaviour
     }
 
 
-    void OnPause(InputValue value)
+    void OnPause(InputAction.CallbackContext context)
     {
-        Debug.Log("Pause!");
+        if (context.performed)
+        {
+            if (Conductor.Instance != null)
+            {
+                if (Conductor.Instance.IsPaused)
+                {
+                    Conductor.Instance.Resume();
+                }
+                else
+                {
+                    Conductor.Instance.Pause();
+                }
+            }
+        }
     }
-    
 
     // 판정
     private void Pop(int lane)
     {
         //inputTime = ns.playTime;
-        inputTimeMs = (int)(ns.playTime * 1000f);
+        if (Conductor.Instance != null && Conductor.Instance.IsPaused)
+            return;
+        inputTimeMs = (int)Conductor.Instance.SongTimeMs;
+        //inputTimeMs = (int)(ns.playTime * 1000f);
+        
         LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
     }
 }
