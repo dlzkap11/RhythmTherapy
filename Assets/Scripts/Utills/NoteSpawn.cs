@@ -13,9 +13,6 @@ public class NoteSpawn : MonoBehaviour
     [SerializeField] private GameObject notePrefabs;
     [SerializeField] private Sprite[] noteSprites;
 
-    // InputManager 가 읽는 공유 재생 시간(초). Conductor 시계로 매 프레임 갱신된다.
-    public double playTime;
-
     [SerializeField] private SongData testSong;
 
     private Queue<GameObject> notePool = new Queue<GameObject>();
@@ -93,9 +90,6 @@ public class NoteSpawn : MonoBehaviour
             Conductor conductor = Conductor.Instance;
             if (conductor == null)
                 return;
-
-            // InputManager.Pop 이 ns.playTime * 1000 으로 입력시간을 만든다 → 같은 시계 공유
-            playTime = conductor.SongTime;
 
             double songMs = conductor.SongTimeMs;
 

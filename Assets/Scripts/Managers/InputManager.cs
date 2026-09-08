@@ -12,7 +12,6 @@ public class InputManager : MonoBehaviour
 
     [SerializeField] private NoteSpawn ns;
     [SerializeField] private int inputTimeMs;
-    private double inputTime;
 
     [Header("Player")]
     [SerializeField] private GameObject player;
@@ -111,7 +110,9 @@ public class InputManager : MonoBehaviour
         //inputTime = ns.playTime;
         if (Conductor.Instance != null && Conductor.Instance.IsPaused)
             return;
-        inputTimeMs = (int)(ns.playTime * 1000f);
+        inputTimeMs = (int)Conductor.Instance.SongTimeMs;
+        //inputTimeMs = (int)(ns.playTime * 1000f);
+        
         LaneManager.Instance.FindAndGetNote(lane, inputTimeMs);
     }
 }
