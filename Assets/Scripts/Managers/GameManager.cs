@@ -141,6 +141,11 @@ public sealed class GameManager : MonoBehaviour
         hpDepletedFired = false;
         gameEnded = false;
         configured = true;
+
+        HpChanged?.Invoke(hp.Current);   // 100
+        ComboChanged?.Invoke(0);
+        ScoreChanged?.Invoke(0, 0);
+
     }
 
     private void OnNoteJudged(int error, int lane)
@@ -213,6 +218,10 @@ public sealed class GameManager : MonoBehaviour
 
         if (hp.IsDepleted && !hpDepletedFired)
         {
+            // 성능 측정(-perftest) 중에는 입력이 없어 전부 자동 Miss → 즉사하므로 게임 종료를 막는다.
+            if (RhythmTherapy.Diagnostics.PerformanceHud.PerfTestActive)
+                return;
+
             hpDepletedFired = true;
             HpDepleted?.Invoke();
             Debug.Log("[GameManager] HP depleted");

@@ -50,6 +50,10 @@ namespace RhythmTherapy.Core
         public const float LobbySlideSeconds = 0.26f;
         /// <summary>로비 미리듣기 곡 전환 시 볼륨 페이드 편도(초).</summary>
         public const float LobbyPreviewFadeSeconds = 0.18f;
+        /// <summary>로비 캐러셀 스와이프: 이 픽셀만큼 가로로 끌 때마다 곡 1칸 이동.</summary>
+        public const float LobbySwipeStepPixels = 90f;
+        /// <summary>로비 캐러셀 스와이프 히트 영역에서 제외할 하단 픽셀(정보/버튼 패널).</summary>
+        public const float LobbySwipeBottomExclusionPx = 320f;
 
         /// <summary>정확도(0~100) 구간 하한 → 등급. 높은 구간부터 순서대로 검사.</summary>
         public struct GradeThreshold

@@ -9,6 +9,7 @@ namespace RhythmTherapy.Core
         public void Reset()
         {
             CurrentScore = 0;
+            MaxScore = 0;
         }
 
         public int SumScore(int score, int combo)
