@@ -1,9 +1,12 @@
+using System;
+
 using UnityEngine;
 
 /// <summary>
 /// 곡 재생 + "노래 재생 시간" 단일 공급원. 스폰/노트이동/입력 판정이 전부 이 시계를 기준으로 동작한다.
 ///
 /// 1차 구현: AudioSource + AudioSettings.dspTime (PlayScheduled 로 시작 시점 고정).
+/// dspTime 은 오디오 버퍼 단위로만 갱신되므로 그 사이는 실시간으로 보간한다(CurrentDspTime).
 /// 추후 FMOD 로 교체 시 이 클래스 뒤만 바꾸면 되도록 캡슐화.
 /// </summary>
 public class Conductor : MonoBehaviour
@@ -25,7 +28,8 @@ public class Conductor : MonoBehaviour
         get
         {
             if (!IsPlaying) return 0.0;
-            double now = IsPaused ? _pausedAtDspTime : AudioSettings.dspTime;
+            // 일시정지 중에는 시계가 멈춰 있으므로 보간 없이 얼어붙은 원시값을 그대로 쓴다.
+            double now = IsPaused ? _pausedAtDspTime : CurrentDspTime();
             return (now - dspStartTime) * 1000.0 - startOffsetMs;
         }
     }
@@ -56,7 +60,51 @@ public class Conductor : MonoBehaviour
     public bool IsPaused { get; private set; }
 
     private double dspStartTime;
+    // 일시정지 순간 값 두 벌. 표시용은 보간값(얼려도 화면이 튀지 않게), 재개 계산용은
+    // 원시값(정지 시간을 원시끼리 빼야 정확히 상쇄된다).
     private double _pausedAtDspTime;
+    private double _pausedAtRawDspTime;
+
+    // dspTime 보간용. 마지막으로 값이 바뀐 순간의 dspTime 과 그때의 실시간을 짝지어 둔다.
+    private double _lastRawDspTime;
+    private double _lastDspSampleRealtime;
+    private double _dspBufferSeconds;
+
+    /// <summary>
+    /// 보간된 dspTime(초).
+    ///
+    /// AudioSettings.dspTime 은 오디오 버퍼가 넘어갈 때만 갱신된다. 현재 설정(1024 샘플)에서는
+    /// 약 21ms 계단이라, 120fps 기준 2~3 프레임 동안 같은 값이 나온다. 판정창(Perfect ±25ms)과
+    /// 맞먹는 크기라 그대로 두면 입력 시각이 최대 한 버퍼만큼 낡은 채로 찍힌다.
+    ///
+    /// 그래서 dspTime 이 멈춰 있는 구간은 실시간 경과분으로 메운다. 다만 다음 버퍼 경계 너머로는
+    /// 예측하지 않는다 — 그래야 실제 값이 도착했을 때 시간이 뒤로 가지 않는다(단조 증가 보장).
+    /// </summary>
+    private double CurrentDspTime()
+    {
+        double raw = AudioSettings.dspTime;
+        double realtime = Time.realtimeSinceStartupAsDouble;
+
+        if (raw != _lastRawDspTime)
+        {
+            _lastRawDspTime = raw;
+            _lastDspSampleRealtime = realtime;
+            return raw;
+        }
+
+        double extrapolated = _lastRawDspTime + (realtime - _lastDspSampleRealtime);
+        if (_dspBufferSeconds <= 0.0)
+            return extrapolated;
+
+        return Math.Min(extrapolated, _lastRawDspTime + _dspBufferSeconds);
+    }
+
+    /// <summary>보간 기준점을 현재 시각으로 다시 맞춘다. 재생 시작·일시정지 해제 직후에 호출.</summary>
+    private void ResyncDspClock()
+    {
+        _lastRawDspTime = AudioSettings.dspTime;
+        _lastDspSampleRealtime = Time.realtimeSinceStartupAsDouble;
+    }
 
     private void Awake()
     {
@@ -66,6 +114,13 @@ public class Conductor : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // 보간 상한으로 쓸 버퍼 길이. 장치마다 다르므로 실제 설정에서 읽는다.
+        AudioConfiguration audioConfig = AudioSettings.GetConfiguration();
+        _dspBufferSeconds = audioConfig.sampleRate > 0
+            ? (double)audioConfig.dspBufferSize / audioConfig.sampleRate
+            : 0.0;
+        ResyncDspClock();
 
         QualitySettings.vSyncCount = 0;          // vSync 끄고
         Application.targetFrameRate = 120;       // 명시적 타겟 (모니터 주사율 이상 권장)
@@ -116,6 +171,7 @@ public class Conductor : MonoBehaviour
 
         startOffsetMs = offsetMs;
         IsPlaying = true;
+        ResyncDspClock();
     }
 
     public void Pause()
@@ -123,7 +179,8 @@ public class Conductor : MonoBehaviour
         if(IsPlaying && !IsPaused && SongTimeMs > 0)
         {
             audioSource.Pause();
-            _pausedAtDspTime = AudioSettings.dspTime;
+            _pausedAtDspTime = CurrentDspTime();          // 화면에 보일 시각 — 보간값 그대로 얼린다
+            _pausedAtRawDspTime = AudioSettings.dspTime;  // 재개 보정용 — 원시값
             IsPaused = true;
         }
     }
@@ -132,9 +189,10 @@ public class Conductor : MonoBehaviour
     {
         if(IsPlaying && IsPaused)
         {
-            dspStartTime += AudioSettings.dspTime - _pausedAtDspTime;
+            dspStartTime += AudioSettings.dspTime - _pausedAtRawDspTime;
             audioSource.UnPause();
             IsPaused = false;
+            ResyncDspClock();
         }
     }
 

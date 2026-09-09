@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SongDataConfig
   SongID: 2
   SongName: Jinsei wa Belt Conveyor no Youni Nagareru
-  AlbumArt: {fileID: 4804446361586417100, guid: 1c991d670b641f040977cdea23486b6c, type: 3}
+  AlbumArt: {fileID: 4275672842487506323, guid: 794ed5237a56c864eb47c96ac5fc221d, type: 3}
   ThemeColor: {r: 0.7, g: 0.35, b: 0.95, a: 1}
   SongAudioClip: {fileID: 8300000, guid: 55691b9d8f33e6d49b30324e79908dc1, type: 3}
   SongVolume: 0.2

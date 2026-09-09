@@ -53,7 +53,7 @@ namespace RhythmTherapy.Diagnostics
         private Texture2D _pixel;
         private readonly StringBuilder _sb = new StringBuilder(256);
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
             string[] args = Environment.GetCommandLineArgs();

@@ -7,6 +7,8 @@ public class NoteSpawn : MonoBehaviour
 {
     private static readonly ProfilerMarker s_updateMarker = new ProfilerMarker("Rhythm.NoteSpawn.Update");
 
+    public int ApproachMs = 1500;
+
     [SerializeField] private GameObject[] laneNotes;        // 레인별 스폰 위치
     [SerializeField] private Transform[] laneJudgeLines;    // 레인별 판정선 위치
 
@@ -19,7 +21,7 @@ public class NoteSpawn : MonoBehaviour
     [SerializeField] private SongData testSong;
 
     private Queue<GameObject> notePool = new Queue<GameObject>();
-    private const int BaselinePoolSize = 30;   // 최소 풀
+    private const int BaselinePoolSize = 100;   // 최소 풀
     private const int MaxPoolSize = 400;        // 버스트 대비 상한
     private int poolCreated;
 
@@ -43,6 +45,7 @@ public class NoteSpawn : MonoBehaviour
             note.SetActive(false);
             notePool.Enqueue(note);
         }
+        Debug.Log("현재 풀 사이즈:" + notePool.Count);
     }
 
     private void Start()
@@ -87,7 +90,8 @@ public class NoteSpawn : MonoBehaviour
 
         // 버스트 구간(같은 시각에 몰리는 노트)을 커버할 만큼 풀을 확장한다.
         // 활성 구간 ≈ ApproachMs(스폰~판정선) + 자동 Miss 여유. 그 창 안 최대 동시 노트 + 여유분.
-        EnsurePoolCapacity(PeakConcurrency(testSong.NoteDatas, GameConfig.ApproachMs + 400) + 8);
+        //EnsurePoolCapacity(PeakConcurrency(testSong.NoteDatas, GameConfig.ApproachMs + 400) + 8);
+        EnsurePoolCapacity(PeakConcurrency(testSong.NoteDatas, ApproachMs + 400) + 8);
 
         // 곡 종료 시각 = 마지막 노트 판정시간 + 꼬리 재생 여유.
         int lastHitMs = testSong.NoteDatas.Count > 0
@@ -140,7 +144,8 @@ public class NoteSpawn : MonoBehaviour
             while (index < testSong.NoteDatas.Count)
             {
                 NoteData data = testSong.NoteDatas[index];
-                if (NoteMath.SpawnTimeMs(data.HitTimeMS, GameConfig.ApproachMs) > songMs)
+                //if (NoteMath.SpawnTimeMs(data.HitTimeMS, GameConfig.ApproachMs) > songMs)
+                if (NoteMath.SpawnTimeMs(data.HitTimeMS, ApproachMs) > songMs)
                     break;
 
                 SpawnNote(data);
@@ -176,7 +181,8 @@ public class NoteSpawn : MonoBehaviour
         note.GetComponent<SpriteRenderer>().sprite = noteSprites[lane];
 
         Note noteComp = note.GetComponent<Note>();
-        noteComp.Bind(data, spawnPos, targetPos, GameConfig.ApproachMs);
+        //noteComp.Bind(data, spawnPos, targetPos, GameConfig.ApproachMs);
+        noteComp.Bind(data, spawnPos, targetPos, ApproachMs);
         note.SetActive(true);
 
         activeByLane[lane].Enqueue(noteComp);

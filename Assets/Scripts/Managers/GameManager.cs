@@ -50,7 +50,7 @@ public sealed class GameManager : MonoBehaviour
     public event Action HpDepleted;
     // 판정 이벤트
     public event Action<int> Judged;
-    public event Action<int> JudgeMissed;
+    //public event Action<int> JudgeMissed;
     // 점수 이벤트
     public event Action<int, int> ScoreChanged;
     // 결과 확정 이벤트 (ResultScene 로드 직전)
@@ -213,6 +213,7 @@ public sealed class GameManager : MonoBehaviour
 
     private void ApplyHpDamage(int amount)
     {
+
         hp.Damage(amount);
         HpChanged?.Invoke(hp.Current);
 

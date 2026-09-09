@@ -18,7 +18,7 @@ public class JudgementView : MonoBehaviour
     [SerializeField] private float duration = 0.8f;
 
     private Queue<GameObject> judgePool = new Queue<GameObject>();
-    private const int MAX_POOL_SIZE = 30;
+    private const int MAX_POOL_SIZE = 100;
 
 
     private void Awake()

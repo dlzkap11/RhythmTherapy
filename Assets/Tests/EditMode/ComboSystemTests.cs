@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using RhythmTherapy.Core;
 
 namespace RhythmTherapy.Core.Tests
 {
