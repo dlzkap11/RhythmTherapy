@@ -1878,6 +1878,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e47290f58d74024399547bf3905372c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NoteSpawn
+  ApproachMs: 1500
   laneNotes:
   - {fileID: 566604577}
   - {fileID: 492032765}
@@ -1888,7 +1889,7 @@ MonoBehaviour:
   noteSprites:
   - {fileID: 2200628110974392531, guid: 5e93db726fc432942b7b87d472149139, type: 3}
   - {fileID: -1333019689849740829, guid: 3ce48347fde2e9d46b7d934017fe02bb, type: 3}
-  playTime: 0
+  editorTestSong: {fileID: 0}
   testSong:
     SongID: 0
     SongName: 
@@ -2895,8 +2896,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -821, y: 472}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: -686.66516, y: 472}
+  m_SizeDelta: {x: 468.6697, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2133685047
 MonoBehaviour:

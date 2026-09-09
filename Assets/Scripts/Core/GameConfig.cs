@@ -11,7 +11,7 @@ namespace RhythmTherapy.Core
 
         // --- HP (임시 확정값, 밸런싱 전) ---
         /// <summary>최대 HP.</summary>
-        public const int HpMax = 100;
+        public const int HpMax = 200;
         /// <summary>노트를 놓칠 때(자동 Miss) 1회당 HP 감소량.</summary>
         public const int HpMissDamage = 10;
         /// <summary>회복 조건 충족 시 판정 성공 1회당 HP 회복량.</summary>
